@@ -42,7 +42,7 @@
 		<script src="js/loaders/OBJLoader.js"></script>
 		<!--<script src="js/loaders/BinaryLoader.js"></script>-->
 		<script src="js/SPE.min.js"></script>
-		<script src="js/shaders/FresnelShader.js"></script>
+		<!--<script src="js/shaders/FresnelShader.js"></script>-->
 
 		<script src="js/Detector.js"></script>
 		<script src="js/libs/stats.min.js"></script>
@@ -87,7 +87,9 @@
 				document.body.appendChild(container);
 
 				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
-				camera.position.z = 200;
+				//var camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000 );
+				camera.position.z = 400;
+				camera.position.y = 50;
 
 				cameraCube = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
 
@@ -138,7 +140,7 @@
 				sceneCube.add( mesh );
 
 				// Renderer
-				renderer = new THREE.WebGLRenderer();
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.autoClear = false;
@@ -267,8 +269,8 @@
 				// Add 3D Text 1
 				var theText1 = "Season’s Greetings from Juniper Networks";
 				var text3d1 = new THREE.TextGeometry( theText1, {
-					size: 5,
-					height: 0.5,
+					size: 15,
+					height: 0,
 					curveSegments: 2,
 					font: "helvetiker"
 				});
@@ -281,7 +283,7 @@
 					new THREE.MeshBasicMaterial( { color: 0x000000, overdraw: 0.5 } )
 				] );
 				var text1 = new THREE.Mesh( text3d1, material );
-				text1.position.set (centerOffset, 60, 0);
+				text1.position.set (centerOffset, 140, 0);
 				text1.rotation.set (0, Math.PI * 2, 0);
 				scene.add (text1);
 				
@@ -289,8 +291,8 @@
 				// Add 3D Text 2
 				var theText2 = "May this find you contented and connected.";
 				var text3d2 = new THREE.TextGeometry( theText2, {
-					size: 3,
-					height: 0.5,
+					size: 8,
+					height: 0,
 					curveSegments: 2,
 					font: "helvetiker"
 				});
@@ -303,7 +305,7 @@
 					new THREE.MeshBasicMaterial( { color: 0x000000, overdraw: 0.5 } )
 				] );
 				var text2 = new THREE.Mesh( text3d2, material );
-				text2.position.set (centerOffset, 50, 0);
+				text2.position.set (centerOffset, 120, 0);
 				text2.rotation.set (0, Math.PI * 2, 0);
 				scene.add (text2);
 
@@ -322,6 +324,14 @@
 					//createScene (object, cubeMaterial1, cubeMaterial2, cubeMaterial3 );
 
 				}, onProgress, onError );*/
+				
+				// Juniper HQ Image
+				var hqTexture = THREE.ImageUtils.loadTexture('textures/juniper.jpg');
+				var hqGeometry = new THREE.PlaneGeometry( 100, 100, 1 );
+				var hqMaterial = new THREE.MeshBasicMaterial( { map: hqTexture, side: THREE.DoubleSide} );
+				var hqPlane = new THREE.Mesh( hqGeometry, hqMaterial );
+				hqPlane.position.set (0, 30, -10);
+				scene.add( hqPlane );
 
 				//
 
@@ -471,8 +481,8 @@
 
 				var timer = -0.0002 * Date.now();
 
-				camera.position.x += ( mouseX - camera.position.x ) * .05;
-				camera.position.y += ( - mouseY - camera.position.y ) * .05;
+				//camera.position.x += ( mouseX - camera.position.x ) * .05;
+				//camera.position.y += ( - mouseY - camera.position.y ) * .05;
 
 				camera.lookAt( scene.position );
 
