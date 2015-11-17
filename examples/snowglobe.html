@@ -45,7 +45,10 @@
 		<!--<script src="js/shaders/FresnelShader.js"></script>-->
 
 		<script src="js/Detector.js"></script>
+
 		<script src="js/libs/stats.min.js"></script>
+		<script src="js/libs/dat.gui.min.js"></script>
+
 		
 		<!-- 3D Text -->
 		<script src="js/geometries/TextGeometry.js"></script>
@@ -76,6 +79,12 @@
 
 			var windowHalfX = window.innerWidth / 2;
 			var windowHalfY = window.innerHeight / 2;
+
+			var mouseDown = false;
+			var mouseDownStart, startRotationY;
+
+			var globeGroup;
+
 
 			init();
 			initParticles();
@@ -154,6 +163,10 @@
 				stats.domElement.style.zIndex = 100;
 				container.appendChild( stats.domElement );
 
+
+				// Group all the snowglobe elements together.
+				globeGroup = new THREE.Group();
+
 				// Front side
 				var sphereGeometry0 = new THREE.SphereBufferGeometry( 100, 32, 16 );
 				var sphereMaterial0 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9, transparent: true, opacity: 0.25 } );
@@ -172,14 +185,14 @@
 				var sphereGeometry1 = new THREE.SphereBufferGeometry( 100, 32, 16 );
 				var sphereMaterial1 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9, side: THREE.BackSide } );
 				var sphereMesh1 = new THREE.Mesh( sphereGeometry1, sphereMaterial1 );
-				scene.add( sphereMesh1 );
+				globeGroup.add( sphereMesh1 );
 
 				// Base geometry
 				var cylinderGeometry = new THREE.CylinderGeometry( 90, 90, 70, 32 );
 				var cylinderMaterial = new THREE.MeshLambertMaterial( {color: 0xcccccc} );
 				var cylinder = new THREE.Mesh( cylinderGeometry, cylinderMaterial );
 				cylinder.position.y = -80;
-				scene.add( cylinder );
+				globeGroup.add( cylinder );
 
 				// Ground plane
 				/*var planeGeometry = new THREE.BoxGeometry( 1000, 10, 1000 );
@@ -217,7 +230,8 @@
 
 					object.scale.set (98, 98, 98);
 					console.log('done');
-					scene.add( object );
+					//scene.add( object );
+					globeGroup.add (object);
 
 				}, onProgress, onError );
 
@@ -240,27 +254,27 @@
 
 					object.scale.set (3, 3, 3);
 					object.position.set (-20, 17, 0);
-					scene.add( object );
+					globeGroup.add( object );
 
 					var tree2 = object.clone();
 					tree2.scale.set (3, 3, 3);
 					tree2.position.set (-30, 20, -5);
-					scene.add( tree2 );
+					globeGroup.add( tree2 );
 
 					var tree3 = object.clone();
 					tree3.scale.set (3, 3, 3);
 					tree3.position.set (-33, 22, 15);
-					scene.add( tree3 );
+					globeGroup.add( tree3 );
 
 					var tree4 = object.clone();
 					tree4.scale.set (3, 3, 3);
 					tree4.position.set (-45, 23, 25);
-					scene.add( tree4 );
+					globeGroup.add( tree4 );
 
 					var tree4 = object.clone();
 					tree4.scale.set (3, 3, 3);
 					tree4.position.set (-25, 20, 40);
-					scene.add( tree4 );
+					globeGroup.add( tree4 );
 
 					console.log('done');
 				}, onProgress, onError );
@@ -289,7 +303,7 @@
 				
 
 				// Add 3D Text 2
-				var theText2 = "May this find you contented and connected.";
+				var theText2 = "May this holiday find you contented and connected.";
 				var text3d2 = new THREE.TextGeometry( theText2, {
 					size: 8,
 					height: 0,
@@ -327,15 +341,37 @@
 				
 				// Juniper HQ Image
 				var hqTexture = THREE.ImageUtils.loadTexture('textures/juniper.jpg');
-				var hqGeometry = new THREE.PlaneGeometry( 100, 100, 1 );
+				var hqGeometry = new THREE.PlaneGeometry( 110, 100, 1 );
 				var hqMaterial = new THREE.MeshBasicMaterial( { map: hqTexture, side: THREE.DoubleSide} );
 				var hqPlane = new THREE.Mesh( hqGeometry, hqMaterial );
 				hqPlane.position.set (0, 30, -10);
-				scene.add( hqPlane );
+				globeGroup.add( hqPlane );
+
+				var backGeometry = new THREE.BoxGeometry( 110, 100, 1 );
+				var backMaterial = new THREE.MeshBasicMaterial( { color: 0x333333 } );
+				var backPlane = new THREE.Mesh( backGeometry, backMaterial );
+				backPlane.position.set (0, 30, -11);
+				globeGroup.add( backPlane );
+
+
+				// Add group to scene
+				scene.add (globeGroup);
+
+
+				// GUI
+				var snowConfig = { snowLevel: 0.5 };
+				var gui = new dat.GUI();
+				var snowGUI = gui.addFolder( "Snow Level" );
+				snowGUI.add( snowConfig, 'snowLevel', 0.1, 1 ).onChange( function() {
+					emitter.activeMultiplier = snowConfig.snowLevel;
+				});
+				snowGUI.open();
 
 				//
 
 				document.addEventListener('mousemove', onDocumentMouseMove, false);
+				document.addEventListener('mousedown', onDocumentMouseDown, false);
+				document.addEventListener('mouseup', onDocumentMouseUp, false);
 
 				//
 
@@ -384,35 +420,9 @@
 	                    spread: 5
 	                },
 
-	        		particleCount: 2000
+	        		particleCount: 20000,
+	        		activeMultiplier: 0.5
 	        	});
-
-				/*emitter = new SPE.Emitter({
-                    type: 0,
-                    maxAge: {
-                        value: 1
-                    },
-                    position: {
-                        value: new THREE.Vector3(0, 0, 0),
-                        radius: 5,
-                        spread: new THREE.Vector3( 3, 3, 3 )
-                    },
-
-                    velocity: {
-                        value: new THREE.Vector3( 3, 3, 3 ),
-                        distribution: SPE.distributions.SPHERE
-                    },
-
-                    color: {
-                        value: [ new THREE.Color('white'), new THREE.Color('red') ]
-                    },
-
-                    size: {
-                        value: 1
-                    },
-
-                    particleCount: 250
-                });*/
 
 
 	        	particleGroup.addEmitter( emitter );
@@ -460,9 +470,24 @@
 
 			function onDocumentMouseMove(event) {
 
-				mouseX = ( event.clientX - windowHalfX ) * 0.25;
-				mouseY = ( event.clientY - windowHalfY ) * 0.25;
+				mouseX = ( event.clientX - windowHalfX );
+				mouseY = ( event.clientY - windowHalfY );
 
+			}
+
+			function onDocumentMouseDown( event ) {
+				mouseDown = true;
+				mouseDownStart = mouseX;
+				startRotationY = globeGroup.rotation.y;
+			}
+
+			function onDocumentMouseUp (event) {
+				mouseDown = false;
+				if ((mouseX - mouseDownStart) > 100){
+					console.log ("rotate left");
+				} else if ((mouseX - mouseDownStart) < -100){
+					console.log ("rotate right");
+				}
 			}
 
 			//
@@ -483,6 +508,9 @@
 
 				//camera.position.x += ( mouseX - camera.position.x ) * .05;
 				//camera.position.y += ( - mouseY - camera.position.y ) * .05;
+				if (mouseDown){
+					globeGroup.rotation.y = startRotationY + ( mouseX - mouseDownStart ) * .01;
+				}
 
 				camera.lookAt( scene.position );
 
