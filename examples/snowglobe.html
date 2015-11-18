@@ -72,7 +72,7 @@
 			//var particles, pointGeometry, materials = [];
 			var emitter, particleGroup;
 
-			var loader;
+			var tloader, omloader, onProgress, onError;
 
 			var directionalLight, pointLight;
 
@@ -85,12 +85,9 @@
 			var mouseDownStart, startRotationY;
 
 			var globeGroup;
-
+			var sunnyvaleGroup, bangaloreGroup, denmarkGroup, londonGroup;
 			var currentGroup = 0;
-			var cityGroups = {
-
-			};
-
+			var cityGroups;
 
 			init();
 			initParticles();
@@ -170,76 +167,44 @@
 				container.appendChild( stats.domElement );
 
 
-				// Group all the snowglobe elements together.
-				globeGroup = new THREE.Group();
-
-				// Front side
-				/*var sphereGeometry0 = new THREE.SphereBufferGeometry( 100, 32, 16 );
-				var sphereMaterial0 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9, transparent: true, opacity: 0.25 } );
-				var sphereMesh0 = new THREE.Mesh( sphereGeometry0, sphereMaterial0 );
-				scene.add( sphereMesh0 );*/
-
-				/*var sphereGeometry0 = new THREE.SphereBufferGeometry( 100, 32, 16 );
-				var fshader = THREE.FresnelShader;
-				fshader.uniforms["tCube"].value = textureCube;
-				var fparameters = { fragmentShader: fshader.fragmentShader, vertexShader: fshader.vertexShader, uniforms: fshader.uniforms };
-				var sphereMaterial0 = new THREE.ShaderMaterial( fparameters );
-				var sphereMesh0 = new THREE.Mesh( sphereGeometry0, sphereMaterial0 );
-				scene.add( sphereMesh0 );*/
-
-				// Back side
-				var sphereGeometry1 = new THREE.SphereBufferGeometry( 100, 32, 16 );
-				var sphereMaterial1 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9, side: THREE.BackSide } );
-				var sphereMesh1 = new THREE.Mesh( sphereGeometry1, sphereMaterial1 );
-				globeGroup.add( sphereMesh1 );
-
-				// Base geometry
-				/*var cylinderGeometry = new THREE.CylinderGeometry( 90, 90, 70, 32 );
-				var cylinderMaterial = new THREE.MeshLambertMaterial( { color: 0xcccccc, envMap: textureCube, reflectivity:0.5 } );
-				var cylinder = new THREE.Mesh( cylinderGeometry, cylinderMaterial );
-				cylinder.position.y = -80;
-				globeGroup.add( cylinder );*/
-
-				// Ground plane
-				/*var planeGeometry = new THREE.BoxGeometry( 1000, 10, 1000 );
-				var planeMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff } );
-				var plane = new THREE.Mesh( planeGeometry, planeMaterial );
-				plane.position.y = -100;
-				scene.add( plane );*/
-
-				// Collada loader
-				/*var cloader = new THREE.ColladaLoader();
-
-				cloader.load(
-					// resource URL
-					'obj/snowglobe/Snowglobe_v02_Export.dae',
-					// Function when resource is loaded
-					function ( collada ) {
-						collada.scene.scale.set (1, 1, 1);
-						globeGroup.add( collada.scene );
-					},
-					// Function called when download progresses
-					function ( xhr ) {
-						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-					}
-				);*/
-
-				
-				// Load snow model.
-				var onProgress = function ( xhr ) {
+				// Setup loaders.
+				onProgress = function ( xhr ) {
 					if ( xhr.lengthComputable ) {
 						var percentComplete = xhr.loaded / xhr.total * 100;
 						console.log( Math.round(percentComplete, 2) + '% downloaded' );
 					}
 				};
 
-				var onError = function ( xhr ) {
+				onError = function ( xhr ) {
 				};
 
 				THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
 
+				omloader = new THREE.OBJMTLLoader();
+				tloader = new THREE.TextureLoader();
+
+				/////////////////
+				// GLOBE GROUP //
+				/////////////////
+
+				// Group all the snowglobe elements together.
+				// The globeGroup contains all cityGroups so that they can be rotated together.
+				// Each cityGroup will have its visiblity toggled based on rotation.
+				globeGroup = new THREE.Group();
+
+				// Front side
+				/*var sphereGeometry0 = new THREE.SphereBufferGeometry( 100, 32, 16 );
+				var sphereMaterial0 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9, transparent: true, opacity: 0.25 } );
+				var sphereMesh0 = new THREE.Mesh( sphereGeometry0, sphereMaterial0 );
+				globeGroup.add( sphereMesh0 );*/
+
+				// Back side reflective material.
+				var sphereGeometry1 = new THREE.SphereBufferGeometry( 100, 32, 16 );
+				var sphereMaterial1 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9, side: THREE.BackSide } );
+				var sphereMesh1 = new THREE.Mesh( sphereGeometry1, sphereMaterial1 );
+				globeGroup.add( sphereMesh1 );
+
 				// Load base model.
-				var omloader = new THREE.OBJMTLLoader();
 				omloader.load( 'obj/snowglobe/Base.obj', 'obj/snowglobe/Base.mtl', function ( object ) {
 					/*object.traverse(function(child) {
 					    if(child instanceof THREE.Mesh) {
@@ -251,180 +216,102 @@
 							});
 					    }
 					});*/
-
 					object.scale.set (60, 60, 60);
 					object.position.set (0, -60, 0);
 					object.rotation.set (0, Math.PI, 0);
 					globeGroup.add( object );
-
-					console.log('done');
 				}, onProgress, onError );
 
-				
-				// Load sunnyvale sign.
-				omloader.load( 'obj/snowglobe/SunnySunnyvale.obj', 'obj/snowglobe/SunnySunnyvale.mtl', function ( object ) {
-					object.traverse(function(child) {
-					    if(child instanceof THREE.Mesh) {
-					      	console.log(child.material);
-							child.material = new THREE.MeshLambertMaterial ( {
-								map: child.material.map,
-								color: child.material.color,
-								blending: THREE.SmoothShading
-							});
-					    }
-					});
-
-					object.scale.set (60, 60, 60);
-					object.position.set (0, -60, 0);
-					object.rotation.set (0, Math.PI, 0);
-					globeGroup.add( object );
-
-					console.log('done');
-				}, onProgress, onError );
-
-				/*var snowTexture = THREE.ImageUtils.loadTexture('obj/snowglobe/Snow.jpg');
-				var loader = new THREE.OBJLoader();
-				loader.load( 'obj/snowglobe/snow.obj', function ( object ) {
-					object.traverse(function(child) {
-					    if(child instanceof THREE.Mesh) {
-					      	console.log(child.material);
-							child.material = new THREE.MeshBasicMaterial ( {
-								map: snowTexture,
-								blending: THREE.SmoothShading
-							});
-					    }
-					});
-
-					object.scale.set (98, 98, 98);
-					console.log('done');
-					//scene.add( object );
-					globeGroup.add (object);
-
-				}, onProgress, onError );*/
-
-				// Load Tree model.
-				/*var treeLoader = new THREE.OBJMTLLoader();
-				treeLoader.load( 'obj/snowglobe/CartoonTree.obj', 'obj/snowglobe/CartoonTree.mtl', function ( object ) {
-
-					object.traverse(function(child) {
-					    if(child instanceof THREE.Mesh) {
-					      	console.log(child.material);
-							child.material = new THREE.MeshLambertMaterial ( {
-								map: child.material.map,
-								color: child.material.color,
-								blending: THREE.SmoothShading
-							});
-					    }
-					});
-
-					object.scale.set (3, 3, 3);
-					object.position.set (-20, 17, 0);
-					globeGroup.add( object );
-
-					var tree2 = object.clone();
-					tree2.scale.set (3, 3, 3);
-					tree2.position.set (-30, 20, -5);
-					globeGroup.add( tree2 );
-
-					var tree3 = object.clone();
-					tree3.scale.set (3, 3, 3);
-					tree3.position.set (-33, 22, 15);
-					globeGroup.add( tree3 );
-
-					var tree4 = object.clone();
-					tree4.scale.set (3, 3, 3);
-					tree4.position.set (-45, 23, 25);
-					globeGroup.add( tree4 );
-
-					var tree4 = object.clone();
-					tree4.scale.set (3, 3, 3);
-					tree4.position.set (-25, 20, 40);
-					globeGroup.add( tree4 );
-
-					console.log('done');
-				}, onProgress, onError );
-*/
-
-
-				// Add 3D Text 1
-				/*var theText1 = "Season’s Greetings from Juniper Networks";
-				var text3d1 = new THREE.TextGeometry( theText1, {
-					size: 15,
-					height: 0,
-					curveSegments: 2,
-					font: "helvetiker"
-				});
-				text3d1.computeBoundingBox();
-				var centerOffset = -0.5 * ( text3d1.boundingBox.max.x - text3d1.boundingBox.min.x );
-				var material = new THREE.MeshFaceMaterial( [
-					//new THREE.MeshBasicMaterial( { color: Math.random() * 0xffffff, overdraw: 0.5 } ),
-					//new THREE.MeshBasicMaterial( { color: 0x000000, overdraw: 0.5 } )
-					new THREE.MeshBasicMaterial( { color: 0x99ccff, overdraw: 0.5 } ),
-					new THREE.MeshBasicMaterial( { color: 0x000000, overdraw: 0.5 } )
-				] );
-				var text1 = new THREE.Mesh( text3d1, material );
-				text1.position.set (centerOffset, 125, 0);
-				text1.rotation.set (0, Math.PI * 2, 0);
-				scene.add (text1);
-				
-
-				// Add 3D Text 2
-				var theText2 = "May this holiday find you contented and connected.";
-				var text3d2 = new THREE.TextGeometry( theText2, {
-					size: 6,
-					height: 0,
-					curveSegments: 2,
-					font: "helvetiker"
-				});
-				text3d2.computeBoundingBox();
-				var centerOffset = -0.5 * ( text3d2.boundingBox.max.x - text3d2.boundingBox.min.x );
-				var material = new THREE.MeshFaceMaterial( [
-					//new THREE.MeshBasicMaterial( { color: Math.random() * 0xffffff, overdraw: 0.5 } ),
-					//new THREE.MeshBasicMaterial( { color: 0x000000, overdraw: 0.5 } )
-					new THREE.MeshBasicMaterial( { color: 0x99ccff, overdraw: 0.5 } ),
-					new THREE.MeshBasicMaterial( { color: 0x000000, overdraw: 0.5 } )
-				] );
-				var text2 = new THREE.Mesh( text3d2, material );
-				text2.position.set (centerOffset, 110, 0);
-				text2.rotation.set (0, Math.PI * 2, 0);
-				scene.add (text2);*/
-
-				/*var loader = new THREE.OBJMTLLoader();
-				loader.load( 'obj/snowglobe/snow.obj', 'obj/snowglobe/snow.mtl', function ( object ) {
-					object.traverse(function(child) {
-					    if(child instanceof THREE.Mesh) {
-					      	console.log(child.material);
-							child.material = new THREE.MeshLambertMaterial ();
-					    }
-					});
-
-					object.scale.x = object.scale.y = object.scale.z = 100;
-					console.log('done');
-					scene.add( object );
-					//createScene (object, cubeMaterial1, cubeMaterial2, cubeMaterial3 );
-
-				}, onProgress, onError );*/
-				
-				// Juniper HQ Image
-				var hqTexture = THREE.ImageUtils.loadTexture('textures/juniper.jpg');
-				//var hqGeometry = new THREE.PlaneGeometry( 110, 100, 1 );
-				var hqGeometry = new THREE.CircleGeometry (95, 64);
-				var hqMaterial = new THREE.MeshBasicMaterial( { map: hqTexture } );
-				var hqPlane = new THREE.Mesh( hqGeometry, hqMaterial );
-				hqPlane.position.set (0, 0, 0);
-				globeGroup.add( hqPlane );
-
-				//var backGeometry = new THREE.BoxGeometry( 110, 100, 1 );
-				//var backGeometry = new THREE.CircleGeometry (95, 32);
+				// Load back panel for all images in globe group.
 				var backGeometry = new THREE.CylinderGeometry( 95, 95, 1, 64 );
-				var backMaterial = new THREE.MeshBasicMaterial( { color: 0x333333, side: THREE.DoubleSide } );
+				var backMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+				//var backMaterial = new THREE.MeshBasicMaterial( { map: 0x333333, side: THREE.DoubleSide } );
 				var backPlane = new THREE.Mesh( backGeometry, backMaterial );
 				backPlane.position.set (0, 0, -1);
 				backPlane.rotation.set (Math.PI/2, 0, 0);
 				globeGroup.add( backPlane );
 
+				tloader.load( 'textures/logo.png', function ( texture ) {
+					var material = new THREE.MeshBasicMaterial( {
+						map: texture,
+						transparent: true
+					} );
+					var geometry = new THREE.CircleGeometry (95, 64);
+					var plane = new THREE.Mesh( geometry, material );
+					plane.rotation.set (0, Math.PI, 0);
+					plane.position.set (0, 0, -2);
+					globeGroup.add( plane );
+				}, onProgress, onError);
+
+
+				///////////////
+				// SUNNYVALE //
+				///////////////
+				sunnyvaleGroup = new THREE.Group();
+
+				// Load sunnyvale sign.
+				createSign ("Sunny Sunnyvale", sunnyvaleGroup);
+
+				// Load sunnyvale image.
+				createImage ('textures/sunnyvale.jpg', sunnyvaleGroup);
+
+				// Add sunnyvaleGroup to the global group.
+				globeGroup.add (sunnyvaleGroup);
+
+
+				///////////////
+				// BANGALORE //
+				///////////////
+				bangaloreGroup = new THREE.Group();
+
+				// Load bangalore image.
+				createImage ('textures/bangalore.jpg', bangaloreGroup);
+
+				// Create sign for bangalore.
+				createSign ("Beautiful Bangalore", bangaloreGroup);
+
+				// Add bangaloreGroup to the global group.
+				globeGroup.add (bangaloreGroup);
+
+
+				/////////////
+				// DENMARK //
+				/////////////
+				denmarkGroup = new THREE.Group();
+
+				// Load denmark image.
+				createImage ('textures/denmark.jpg', denmarkGroup);
+
+				// Create sign for denmark.
+				createSign ("Delightful Denmark", denmarkGroup);
+
+				// Add denmarkGroup to the global group.
+				globeGroup.add (denmarkGroup);
+
+
+				////////////
+				// LONDON //
+				////////////
+				londonGroup = new THREE.Group();
+
+				// Load london image.
+				createImage ('textures/london.jpg', londonGroup);
+
+				// Create sign for bangalore.
+				createSign ("Lovely London", londonGroup);
+
+				// Add londonGroup to the global group.
+				globeGroup.add (londonGroup);
+
+
+	 			cityGroups = [ sunnyvaleGroup, bangaloreGroup, denmarkGroup, londonGroup ];
+				bangaloreGroup.visible = false;
+				denmarkGroup.visible = false;
+				londonGroup.visible = false;
+
 
 				// Add group to scene
+				globeGroup.rotation.y = -0.001;
 				scene.add (globeGroup);
 
 
@@ -451,6 +338,47 @@
 			}
 
 
+			function createImage ( url, group ){
+				tloader.load( url, function ( texture ) {
+					var material = new THREE.MeshBasicMaterial( {
+						map: texture
+					} );
+					var geometry = new THREE.CircleGeometry (95, 64);
+					var plane = new THREE.Mesh( geometry, material );
+					plane.position.set (0, 0, 0);
+					group.add( plane );
+				}, onProgress, onError);
+			}
+
+
+			function createSign ( text, group ){
+				// Create sign for sunnyvale.
+				var geometry = new THREE.BoxGeometry( 128, 26, 3 );
+				var material = new THREE.MeshLambertMaterial( { color: 0xcccccc } );
+				var mesh = new THREE.Mesh( geometry, material );
+				mesh.position.set (0, -20, 60);
+				group.add( mesh );
+
+				// Add sunnyvale text.
+				var text3D = new THREE.TextGeometry( text, {
+					size: 8,
+					height: 4,
+					curveSegments: 2,
+					font: "helvetiker"
+				});
+				text3D.computeBoundingBox();
+				var centerOffset = -0.5 * ( text3D.boundingBox.max.x - text3D.boundingBox.min.x );
+				var textMaterial = new THREE.MeshFaceMaterial( [
+					new THREE.MeshPhongMaterial( { color: 0x333333, overdraw: 0.5 } ),
+					new THREE.MeshPhongMaterial( { color: 0x000000, overdraw: 0.5 } )
+				] );
+				var textMesh = new THREE.Mesh( text3D, textMaterial );
+				textMesh.position.set (centerOffset, -20, 60);
+				textMesh.rotation.set (0, Math.PI * 2, 0);
+				group.add (textMesh);
+			}
+
+
 			// Create particle group and emitter
 	        function initParticles() {
 	        	particleGroup = new SPE.Group({
@@ -468,7 +396,6 @@
 	                    value: new THREE.Vector3(0, 10, 0),
 	                    radius: 90,
 	                    spread: 100,
-	                    //spread: new THREE.Vector3( 20, 0, 20 ),
 	                    distribution: SPE.distributions.SPHERE
 	                },
 
@@ -479,8 +406,6 @@
 
 	        		velocity: {
 	                    value: new THREE.Vector3(0, -50, 0),
-	                    //spread: new THREE.Vector3(5, 7.5, 5),
-	                    //distribution: SPE.distributions.SPHERE
 	                },
 
 	                color: {
@@ -517,28 +442,6 @@
 
 			}
 
-			/*function createScene( geometry, m1, m2, m3 ) {
-
-				var s = 1.5, z = - 1000;
-
-				var mesh = new THREE.Mesh( geometry, m1 );
-				mesh.position.z = z;
-				mesh.scale.x = mesh.scale.y = mesh.scale.z = s;
-				scene.add( mesh );
-
-				var mesh = new THREE.Mesh( geometry, m2 );
-				mesh.position.x = - 900;
-				mesh.position.z = z;
-   				mesh.scale.x = mesh.scale.y = mesh.scale.z = s;
-				scene.add( mesh );
-
-				var mesh = new THREE.Mesh( geometry, m3 );
-				mesh.position.x = 900;
-				mesh.position.z = z;
-				mesh.scale.x = mesh.scale.y = mesh.scale.z = s;
-				scene.add( mesh );
-
-			}*/
 
 			function onDocumentMouseMove ( event ) {
 
@@ -582,7 +485,23 @@
 				//camera.position.y += ( - mouseY - camera.position.y ) * .05;
 				if (mouseDown){
 					globeGroup.rotation.y = startRotationY + ( mouseX - mouseDownStart ) * .01;
+
+					if (globeGroup.rotation.y >= 0)
+						globeGroup.rotation.y = -0.001;
+
+					if (globeGroup.rotation.y <= -Math.PI * 6)
+						globeGroup.rotation.y = -Math.PI * 6 + 0.001;
 				}
+
+				var floorRotation = Math.abs (Math.floor( (globeGroup.rotation.y - Math.PI) / (Math.PI * 2) )) - 1;
+				if (floorRotation != currentGroup) {
+					for (var i = 0; i < cityGroups.length; i++){
+						cityGroups[i].visible = false;
+					}
+					cityGroups[floorRotation].visible = true;
+					currentGroup = floorRotation;
+				}
+				//console.log (floorRotation);
 
 				camera.lookAt( scene.position );
 
