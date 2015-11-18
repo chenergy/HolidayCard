@@ -40,6 +40,7 @@
 		<script src="js/loaders/MTLLoader.js"></script>
 		<script src="js/loaders/OBJMTLLoader.js"></script>
 		<script src="js/loaders/OBJLoader.js"></script>
+		<!--<script src="js/loaders/ColladaLoader.js"></script>-->
 		<!--<script src="js/loaders/BinaryLoader.js"></script>-->
 		<script src="js/SPE.min.js"></script>
 		<!--<script src="js/shaders/FresnelShader.js"></script>-->
@@ -85,6 +86,11 @@
 
 			var globeGroup;
 
+			var currentGroup = 0;
+			var cityGroups = {
+
+			};
+
 
 			init();
 			initParticles();
@@ -97,7 +103,7 @@
 
 				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
 				//var camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000 );
-				camera.position.z = 400;
+				camera.position.z = 350;
 				camera.position.y = 50;
 
 				cameraCube = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
@@ -168,10 +174,10 @@
 				globeGroup = new THREE.Group();
 
 				// Front side
-				var sphereGeometry0 = new THREE.SphereBufferGeometry( 100, 32, 16 );
+				/*var sphereGeometry0 = new THREE.SphereBufferGeometry( 100, 32, 16 );
 				var sphereMaterial0 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9, transparent: true, opacity: 0.25 } );
 				var sphereMesh0 = new THREE.Mesh( sphereGeometry0, sphereMaterial0 );
-				//scene.add( sphereMesh0 );
+				scene.add( sphereMesh0 );*/
 
 				/*var sphereGeometry0 = new THREE.SphereBufferGeometry( 100, 32, 16 );
 				var fshader = THREE.FresnelShader;
@@ -188,11 +194,11 @@
 				globeGroup.add( sphereMesh1 );
 
 				// Base geometry
-				var cylinderGeometry = new THREE.CylinderGeometry( 90, 90, 70, 32 );
-				var cylinderMaterial = new THREE.MeshLambertMaterial( {color: 0xcccccc} );
+				/*var cylinderGeometry = new THREE.CylinderGeometry( 90, 90, 70, 32 );
+				var cylinderMaterial = new THREE.MeshLambertMaterial( { color: 0xcccccc, envMap: textureCube, reflectivity:0.5 } );
 				var cylinder = new THREE.Mesh( cylinderGeometry, cylinderMaterial );
 				cylinder.position.y = -80;
-				globeGroup.add( cylinder );
+				globeGroup.add( cylinder );*/
 
 				// Ground plane
 				/*var planeGeometry = new THREE.BoxGeometry( 1000, 10, 1000 );
@@ -201,7 +207,24 @@
 				plane.position.y = -100;
 				scene.add( plane );*/
 
+				// Collada loader
+				/*var cloader = new THREE.ColladaLoader();
 
+				cloader.load(
+					// resource URL
+					'obj/snowglobe/Snowglobe_v02_Export.dae',
+					// Function when resource is loaded
+					function ( collada ) {
+						collada.scene.scale.set (1, 1, 1);
+						globeGroup.add( collada.scene );
+					},
+					// Function called when download progresses
+					function ( xhr ) {
+						console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+					}
+				);*/
+
+				
 				// Load snow model.
 				var onProgress = function ( xhr ) {
 					if ( xhr.lengthComputable ) {
@@ -215,7 +238,51 @@
 
 				THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
 
-				var snowTexture = THREE.ImageUtils.loadTexture('obj/snowglobe/Snow.jpg');
+				// Load base model.
+				var omloader = new THREE.OBJMTLLoader();
+				omloader.load( 'obj/snowglobe/Base.obj', 'obj/snowglobe/Base.mtl', function ( object ) {
+					/*object.traverse(function(child) {
+					    if(child instanceof THREE.Mesh) {
+					      	console.log(child.material);
+							child.material = new THREE.MeshLambertMaterial ( {
+								map: child.material.map,
+								color: child.material.color,
+								blending: THREE.SmoothShading
+							});
+					    }
+					});*/
+
+					object.scale.set (60, 60, 60);
+					object.position.set (0, -60, 0);
+					object.rotation.set (0, Math.PI, 0);
+					globeGroup.add( object );
+
+					console.log('done');
+				}, onProgress, onError );
+
+				
+				// Load sunnyvale sign.
+				omloader.load( 'obj/snowglobe/SunnySunnyvale.obj', 'obj/snowglobe/SunnySunnyvale.mtl', function ( object ) {
+					object.traverse(function(child) {
+					    if(child instanceof THREE.Mesh) {
+					      	console.log(child.material);
+							child.material = new THREE.MeshLambertMaterial ( {
+								map: child.material.map,
+								color: child.material.color,
+								blending: THREE.SmoothShading
+							});
+					    }
+					});
+
+					object.scale.set (60, 60, 60);
+					object.position.set (0, -60, 0);
+					object.rotation.set (0, Math.PI, 0);
+					globeGroup.add( object );
+
+					console.log('done');
+				}, onProgress, onError );
+
+				/*var snowTexture = THREE.ImageUtils.loadTexture('obj/snowglobe/Snow.jpg');
 				var loader = new THREE.OBJLoader();
 				loader.load( 'obj/snowglobe/snow.obj', function ( object ) {
 					object.traverse(function(child) {
@@ -233,12 +300,10 @@
 					//scene.add( object );
 					globeGroup.add (object);
 
-				}, onProgress, onError );
-
+				}, onProgress, onError );*/
 
 				// Load Tree model.
-				//var treeTexture = THREE.ImageUtils.loadTexture('obj/snowglobe/Snow.jpg');
-				var treeLoader = new THREE.OBJMTLLoader();
+				/*var treeLoader = new THREE.OBJMTLLoader();
 				treeLoader.load( 'obj/snowglobe/CartoonTree.obj', 'obj/snowglobe/CartoonTree.mtl', function ( object ) {
 
 					object.traverse(function(child) {
@@ -278,10 +343,11 @@
 
 					console.log('done');
 				}, onProgress, onError );
+*/
 
 
 				// Add 3D Text 1
-				var theText1 = "Season’s Greetings from Juniper Networks";
+				/*var theText1 = "Season’s Greetings from Juniper Networks";
 				var text3d1 = new THREE.TextGeometry( theText1, {
 					size: 15,
 					height: 0,
@@ -297,7 +363,7 @@
 					new THREE.MeshBasicMaterial( { color: 0x000000, overdraw: 0.5 } )
 				] );
 				var text1 = new THREE.Mesh( text3d1, material );
-				text1.position.set (centerOffset, 140, 0);
+				text1.position.set (centerOffset, 125, 0);
 				text1.rotation.set (0, Math.PI * 2, 0);
 				scene.add (text1);
 				
@@ -305,7 +371,7 @@
 				// Add 3D Text 2
 				var theText2 = "May this holiday find you contented and connected.";
 				var text3d2 = new THREE.TextGeometry( theText2, {
-					size: 8,
+					size: 6,
 					height: 0,
 					curveSegments: 2,
 					font: "helvetiker"
@@ -319,9 +385,9 @@
 					new THREE.MeshBasicMaterial( { color: 0x000000, overdraw: 0.5 } )
 				] );
 				var text2 = new THREE.Mesh( text3d2, material );
-				text2.position.set (centerOffset, 120, 0);
+				text2.position.set (centerOffset, 110, 0);
 				text2.rotation.set (0, Math.PI * 2, 0);
-				scene.add (text2);
+				scene.add (text2);*/
 
 				/*var loader = new THREE.OBJMTLLoader();
 				loader.load( 'obj/snowglobe/snow.obj', 'obj/snowglobe/snow.mtl', function ( object ) {
@@ -341,16 +407,20 @@
 				
 				// Juniper HQ Image
 				var hqTexture = THREE.ImageUtils.loadTexture('textures/juniper.jpg');
-				var hqGeometry = new THREE.PlaneGeometry( 110, 100, 1 );
-				var hqMaterial = new THREE.MeshBasicMaterial( { map: hqTexture, side: THREE.DoubleSide} );
+				//var hqGeometry = new THREE.PlaneGeometry( 110, 100, 1 );
+				var hqGeometry = new THREE.CircleGeometry (95, 64);
+				var hqMaterial = new THREE.MeshBasicMaterial( { map: hqTexture } );
 				var hqPlane = new THREE.Mesh( hqGeometry, hqMaterial );
-				hqPlane.position.set (0, 30, -10);
+				hqPlane.position.set (0, 0, 0);
 				globeGroup.add( hqPlane );
 
-				var backGeometry = new THREE.BoxGeometry( 110, 100, 1 );
-				var backMaterial = new THREE.MeshBasicMaterial( { color: 0x333333 } );
+				//var backGeometry = new THREE.BoxGeometry( 110, 100, 1 );
+				//var backGeometry = new THREE.CircleGeometry (95, 32);
+				var backGeometry = new THREE.CylinderGeometry( 95, 95, 1, 64 );
+				var backMaterial = new THREE.MeshBasicMaterial( { color: 0x333333, side: THREE.DoubleSide } );
 				var backPlane = new THREE.Mesh( backGeometry, backMaterial );
-				backPlane.position.set (0, 30, -11);
+				backPlane.position.set (0, 0, -1);
+				backPlane.rotation.set (Math.PI/2, 0, 0);
 				globeGroup.add( backPlane );
 
 
@@ -364,6 +434,7 @@
 				var snowGUI = gui.addFolder( "Snow Level" );
 				snowGUI.add( snowConfig, 'snowLevel', 0.1, 1 ).onChange( function() {
 					emitter.activeMultiplier = snowConfig.snowLevel;
+					mouseDown = false;
 				});
 				snowGUI.open();
 
@@ -385,7 +456,8 @@
 	        	particleGroup = new SPE.Group({
 	        		texture: {
 	                    value: THREE.ImageUtils.loadTexture('textures/sprites/snowflake2.png')
-	                }
+	                },
+	                maxParticleCount: 20000
 	        	});
 
 	        	emitter = new SPE.Emitter({
@@ -468,20 +540,20 @@
 
 			}*/
 
-			function onDocumentMouseMove(event) {
+			function onDocumentMouseMove ( event ) {
 
 				mouseX = ( event.clientX - windowHalfX );
 				mouseY = ( event.clientY - windowHalfY );
 
 			}
 
-			function onDocumentMouseDown( event ) {
+			function onDocumentMouseDown ( event ) {
 				mouseDown = true;
 				mouseDownStart = mouseX;
 				startRotationY = globeGroup.rotation.y;
 			}
 
-			function onDocumentMouseUp (event) {
+			function onDocumentMouseUp ( event ) {
 				mouseDown = false;
 				if ((mouseX - mouseDownStart) > 100){
 					console.log ("rotate left");
