@@ -81,9 +81,16 @@
 			var mouse = new THREE.Vector2();
 			var INTERSECTED;
 			var raycastObjects;
+			var onClickFunctions;
+
+			var sunnyvaleToggle = false;
+			var bangaloreToggle = false;
+			var denmarkToggle = false;
+			var londonToggle = false;
 
 			init();
-			initParticles();
+			initParticles('textures/sprites/snowflake2.png');
+			//initParticles('textures/sprites/puppy.png');
 			animate();
 
 			function init() {
@@ -116,7 +123,7 @@
 				//pointLight.add( mesh );
 
 				// material samples
-				var r = "textures/cube/Park3Med/";
+				var r = "textures/cube/gray/";
 
 				var urls = [ r + "px.jpg", r + "nx.jpg",
 							 r + "py.jpg", r + "ny.jpg",
@@ -142,7 +149,7 @@
 				} ),
 
 				mesh = new THREE.Mesh( new THREE.BoxGeometry( 100000, 100000, 100000 ), material );
-				//sceneCube.add( mesh );
+				sceneCube.add( mesh );
 
 				// Renderer
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -288,13 +295,75 @@
 				/////////////////////
 				// Raycast Objects //
 				/////////////////////
-				raycastObjects = new THREE.Group();
+				raycastObjects = [];
 				createRaycastObject (
-					new THREE.Vector3( 20, 4, 4 ), 
-					new THREE.Vector3( 0, 100, 0 ), 
+					"sunnyvale",
+					new THREE.Vector3( 10, 4, 4 ), 
+					new THREE.Vector3( 0, 50, 20 ), 
 					sunnyvaleGroup 
 				);
-				scene.add (raycastObjects);
+
+				createRaycastObject (
+					"bangalore",
+					new THREE.Vector3( 10, 4, 4 ), 
+					new THREE.Vector3( 0, 50, 20 ), 
+					bangaloreGroup 
+				);
+
+				createRaycastObject (
+					"denmark",
+					new THREE.Vector3( 10, 4, 4 ), 
+					new THREE.Vector3( 0, 50, 20 ), 
+					denmarkGroup 
+				);
+
+				createRaycastObject (
+					"london",
+					new THREE.Vector3( 10, 4, 4 ), 
+					new THREE.Vector3( 0, 50, 20 ), 
+					londonGroup 
+				);
+
+
+				// Functionality of each onClick action for raycasts.
+				onClickFunctions = {
+					'sunnyvale' : function () { 
+						if (!sunnyvaleToggle)
+							emitter.color.value = [ new THREE.Color('red'), new THREE.Color('green'), new THREE.Color('blue') ]; 
+						else
+							emitter.color.value = [ new THREE.Color('white') ]; 
+
+						sunnyvaleToggle = !sunnyvaleToggle;
+					},
+
+					'bangalore' : function (){
+						if (!bangaloreToggle)
+							emitter.color.value = [ new THREE.Color('red'), new THREE.Color('green'), new THREE.Color('blue') ]; 
+						else
+							emitter.color.value = [ new THREE.Color('white') ]; 
+
+						bangaloreToggle = !bangaloreToggle;
+					},
+
+					'denmark' : function (){
+						if (!denmarkToggle)
+							emitter.color.value = [ new THREE.Color('red'), new THREE.Color('green'), new THREE.Color('blue') ]; 
+						else
+							emitter.color.value = [ new THREE.Color('white') ]; 
+
+						denmarkToggle = !denmarkToggle;
+					},
+
+					'london' : function (){
+						if (!londonToggle)
+							emitter.color.value = [ new THREE.Color('red'), new THREE.Color('green'), new THREE.Color('blue') ]; 
+						else
+							emitter.color.value = [ new THREE.Color('white') ]; 
+
+						londonToggle = !londonToggle;
+					}
+				};
+				
 
 
 				// GUI
@@ -320,14 +389,14 @@
 			}
 
 
-			function createRaycastObject ( attr, position, group ){
+			function createRaycastObject ( name, attr, position, group ){
 				var rayGeo = new THREE.SphereGeometry( attr.x, attr.y, attr.z );
-				//var rayMaterial = new THREE.MeshLambertMaterial( { color: 0xffffff } );
 				var rayMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
 				var rayMesh = new THREE.Mesh( rayGeo, rayMaterial );
+				rayMesh.name = name;
 				rayMesh.position.set (position.x, position.y, position.z);
-				//group.add ( rayMesh );
-				raycastObjects.add ( rayMesh );
+				group.add ( rayMesh );
+				raycastObjects.push ( rayMesh );
 			}
 
 
@@ -373,10 +442,10 @@
 
 
 			// Create particle group and emitter
-	        function initParticles() {
+	        function initParticles( url ) {
 	        	particleGroup = new SPE.Group({
 	        		texture: {
-	                    value: THREE.ImageUtils.loadTexture('textures/sprites/snowflake2.png')
+	                    value: THREE.ImageUtils.loadTexture(url)
 	                },
 	                maxParticleCount: 20000
 	        	});
@@ -401,9 +470,9 @@
 	                    value: new THREE.Vector3(0, -50, 0),
 	                },
 
-	                color: {
+	                /*color: {
 	                    value: [ new THREE.Color('white') ]
-	                },
+	                },*/
 
 	                size: {
 	                    value: [ 1, 10, 0 ],
@@ -460,7 +529,8 @@
 				startRotationY = globeGroup.rotation.y;
 
 				if (INTERSECTED)
-					console.log (INTERSECTED.position.y);
+					onClickFunctions[INTERSECTED.name]();
+					//console.log (INTERSECTED.name);
 			}
 
 			function onDocumentMouseUp ( event ) {
@@ -488,8 +558,8 @@
 
 				var timer = -0.0002 * Date.now();
 
-				//camera.position.x += ( mouseX - camera.position.x ) * .05;
-				//camera.position.y += ( - mouseY - camera.position.y ) * .05;
+				//camera.position.x += ( mouse.x - camera.position.x ) * .05;
+				//camera.position.y += ( - mouse.y - camera.position.y ) * .05;
 				// Clamp the rotation of the globe.
 				if (mouseDown){
 					globeGroup.rotation.y = startRotationY + ( mouse.x - mouseDownStart ) * 5;
@@ -515,7 +585,7 @@
 
 				// find intersections
 				raycaster.setFromCamera( mouse, camera );
-				var intersects = raycaster.intersectObjects( raycastObjects.children );
+				var intersects = raycaster.intersectObjects( raycastObjects );
 				if ( intersects.length > 0 ) {
 					INTERSECTED = intersects [0].object;
 					/*if ( INTERSECTED )
@@ -542,6 +612,13 @@
 					if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
 					INTERSECTED = null;
 				}*/
+
+				for (var i = 0; i < raycastObjects.length; i++){
+					raycastObjects[i].rotation.x += 0.01;
+					raycastObjects[i].rotation.y += 0.01;
+					raycastObjects[i].rotation.z += 0.01;
+				}
+
 
 				// Camera
 				camera.lookAt( scene.position );
