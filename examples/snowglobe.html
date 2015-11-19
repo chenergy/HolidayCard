@@ -27,29 +27,18 @@
 	</head>
 
 	<body>
-		<!--<div id="d">
-			<p><a href="http://threejs.org">Three.js</a> cube map refraction demo
-
-			<p>Lucy model from <a href="http://graphics.stanford.edu/data/3Dscanrep/">Stanford 3d scanning repository</a>
-			<p>Texture by <a href="http://www.humus.name/index.php?page=Textures" target="_blank">Humus</a>
-		</div>-->
-
 		<script src="../build/three.min.js"></script>
 
 		<script src="js/loaders/DDSLoader.js"></script>
 		<script src="js/loaders/MTLLoader.js"></script>
 		<script src="js/loaders/OBJMTLLoader.js"></script>
 		<script src="js/loaders/OBJLoader.js"></script>
-		<!--<script src="js/loaders/ColladaLoader.js"></script>-->
-		<!--<script src="js/loaders/BinaryLoader.js"></script>-->
 		<script src="js/SPE.min.js"></script>
-		<!--<script src="js/shaders/FresnelShader.js"></script>-->
 
 		<script src="js/Detector.js"></script>
 
 		<script src="js/libs/stats.min.js"></script>
 		<script src="js/libs/dat.gui.min.js"></script>
-
 		
 		<!-- 3D Text -->
 		<script src="js/geometries/TextGeometry.js"></script>
@@ -67,16 +56,15 @@
 			var camera, scene, renderer;
 			var cameraCube, sceneCube, cubeTarget;
 
-			var mesh, zmesh, geometry;
+			//var mesh, zmesh, geometry;
 
-			//var particles, pointGeometry, materials = [];
 			var emitter, particleGroup;
 
 			var tloader, omloader, onProgress, onError;
 
 			var directionalLight, pointLight;
 
-			var mouseX = 0, mouseY = 0;
+			//var mouseX = 0, mouseY = 0;
 
 			var windowHalfX = window.innerWidth / 2;
 			var windowHalfY = window.innerHeight / 2;
@@ -88,6 +76,11 @@
 			var sunnyvaleGroup, bangaloreGroup, denmarkGroup, londonGroup;
 			var currentGroup = 0;
 			var cityGroups;
+
+			var raycaster = new THREE.Raycaster();
+			var mouse = new THREE.Vector2();
+			var INTERSECTED;
+			var raycastObjects;
 
 			init();
 			initParticles();
@@ -149,7 +142,7 @@
 				} ),
 
 				mesh = new THREE.Mesh( new THREE.BoxGeometry( 100000, 100000, 100000 ), material );
-				sceneCube.add( mesh );
+				//sceneCube.add( mesh );
 
 				// Renderer
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -183,6 +176,14 @@
 				omloader = new THREE.OBJMTLLoader();
 				tloader = new THREE.TextureLoader();
 
+				THREE.DefaultLoadingManager.onLoad = function ( ) {
+				    console.log( "all done" );
+				};
+
+				THREE.DefaultLoadingManager.onProgress = function ( item, loaded, total ) {
+					console.log( item, loaded, total );
+				};
+
 				/////////////////
 				// GLOBE GROUP //
 				/////////////////
@@ -191,12 +192,6 @@
 				// The globeGroup contains all cityGroups so that they can be rotated together.
 				// Each cityGroup will have its visiblity toggled based on rotation.
 				globeGroup = new THREE.Group();
-
-				// Front side
-				/*var sphereGeometry0 = new THREE.SphereBufferGeometry( 100, 32, 16 );
-				var sphereMaterial0 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9, transparent: true, opacity: 0.25 } );
-				var sphereMesh0 = new THREE.Mesh( sphereGeometry0, sphereMaterial0 );
-				globeGroup.add( sphereMesh0 );*/
 
 				// Back side reflective material.
 				var sphereGeometry1 = new THREE.SphereBufferGeometry( 100, 32, 16 );
@@ -248,14 +243,8 @@
 				// SUNNYVALE //
 				///////////////
 				sunnyvaleGroup = new THREE.Group();
-
-				// Load sunnyvale sign.
 				createSign ("Sunny Sunnyvale", sunnyvaleGroup);
-
-				// Load sunnyvale image.
 				createImage ('textures/sunnyvale.jpg', sunnyvaleGroup);
-
-				// Add sunnyvaleGroup to the global group.
 				globeGroup.add (sunnyvaleGroup);
 
 
@@ -263,14 +252,8 @@
 				// BANGALORE //
 				///////////////
 				bangaloreGroup = new THREE.Group();
-
-				// Load bangalore image.
 				createImage ('textures/bangalore.jpg', bangaloreGroup);
-
-				// Create sign for bangalore.
 				createSign ("Beautiful Bangalore", bangaloreGroup);
-
-				// Add bangaloreGroup to the global group.
 				globeGroup.add (bangaloreGroup);
 
 
@@ -278,14 +261,8 @@
 				// DENMARK //
 				/////////////
 				denmarkGroup = new THREE.Group();
-
-				// Load denmark image.
 				createImage ('textures/denmark.jpg', denmarkGroup);
-
-				// Create sign for denmark.
 				createSign ("Delightful Denmark", denmarkGroup);
-
-				// Add denmarkGroup to the global group.
 				globeGroup.add (denmarkGroup);
 
 
@@ -293,26 +270,31 @@
 				// LONDON //
 				////////////
 				londonGroup = new THREE.Group();
-
-				// Load london image.
 				createImage ('textures/london.jpg', londonGroup);
-
-				// Create sign for bangalore.
 				createSign ("Lovely London", londonGroup);
-
-				// Add londonGroup to the global group.
 				globeGroup.add (londonGroup);
 
 
-	 			cityGroups = [ sunnyvaleGroup, bangaloreGroup, denmarkGroup, londonGroup ];
+				// Add city groups to scene.
+				cityGroups = [ sunnyvaleGroup, bangaloreGroup, denmarkGroup, londonGroup ];
 				bangaloreGroup.visible = false;
 				denmarkGroup.visible = false;
 				londonGroup.visible = false;
-
-
-				// Add group to scene
 				globeGroup.rotation.y = -0.001;
 				scene.add (globeGroup);
+
+
+
+				/////////////////////
+				// Raycast Objects //
+				/////////////////////
+				raycastObjects = new THREE.Group();
+				createRaycastObject (
+					new THREE.Vector3( 20, 4, 4 ), 
+					new THREE.Vector3( 0, 100, 0 ), 
+					sunnyvaleGroup 
+				);
+				scene.add (raycastObjects);
 
 
 				// GUI
@@ -338,6 +320,17 @@
 			}
 
 
+			function createRaycastObject ( attr, position, group ){
+				var rayGeo = new THREE.SphereGeometry( attr.x, attr.y, attr.z );
+				//var rayMaterial = new THREE.MeshLambertMaterial( { color: 0xffffff } );
+				var rayMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
+				var rayMesh = new THREE.Mesh( rayGeo, rayMaterial );
+				rayMesh.position.set (position.x, position.y, position.z);
+				//group.add ( rayMesh );
+				raycastObjects.add ( rayMesh );
+			}
+
+
 			function createImage ( url, group ){
 				tloader.load( url, function ( texture ) {
 					var material = new THREE.MeshBasicMaterial( {
@@ -352,14 +345,14 @@
 
 
 			function createSign ( text, group ){
-				// Create sign for sunnyvale.
+				// Create sign box.
 				var geometry = new THREE.BoxGeometry( 128, 26, 3 );
 				var material = new THREE.MeshLambertMaterial( { color: 0xcccccc } );
 				var mesh = new THREE.Mesh( geometry, material );
 				mesh.position.set (0, -20, 60);
 				group.add( mesh );
 
-				// Add sunnyvale text.
+				// Add text.
 				var text3D = new THREE.TextGeometry( text, {
 					size: 8,
 					height: 4,
@@ -373,7 +366,7 @@
 					new THREE.MeshPhongMaterial( { color: 0x000000, overdraw: 0.5 } )
 				] );
 				var textMesh = new THREE.Mesh( text3D, textMaterial );
-				textMesh.position.set (centerOffset, -20, 60);
+				textMesh.position.set (centerOffset, -22, 60);
 				textMesh.rotation.set (0, Math.PI * 2, 0);
 				group.add (textMesh);
 			}
@@ -444,23 +437,37 @@
 
 
 			function onDocumentMouseMove ( event ) {
+				event.preventDefault();
 
-				mouseX = ( event.clientX - windowHalfX );
-				mouseY = ( event.clientY - windowHalfY );
+				//mouse.x = ( event.clientX - windowHalfX );
+				//mouse.y = ( event.clientY - windowHalfY );
+
+				// calculate mouse position in normalized device coordinates
+				// (-1 to +1) for both components
+
+				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+				
+
+				//mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				//mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
 			}
 
 			function onDocumentMouseDown ( event ) {
 				mouseDown = true;
-				mouseDownStart = mouseX;
+				mouseDownStart = mouse.x;
 				startRotationY = globeGroup.rotation.y;
+
+				if (INTERSECTED)
+					console.log (INTERSECTED.position.y);
 			}
 
 			function onDocumentMouseUp ( event ) {
 				mouseDown = false;
-				if ((mouseX - mouseDownStart) > 100){
+				if ((mouse.x - mouseDownStart) > 100){
 					console.log ("rotate left");
-				} else if ((mouseX - mouseDownStart) < -100){
+				} else if ((mouse.x - mouseDownStart) < -100){
 					console.log ("rotate right");
 				}
 			}
@@ -483,16 +490,19 @@
 
 				//camera.position.x += ( mouseX - camera.position.x ) * .05;
 				//camera.position.y += ( - mouseY - camera.position.y ) * .05;
+				// Clamp the rotation of the globe.
 				if (mouseDown){
-					globeGroup.rotation.y = startRotationY + ( mouseX - mouseDownStart ) * .01;
-
-					if (globeGroup.rotation.y >= 0)
-						globeGroup.rotation.y = -0.001;
-
-					if (globeGroup.rotation.y <= -Math.PI * 6)
-						globeGroup.rotation.y = -Math.PI * 6 + 0.001;
+					globeGroup.rotation.y = startRotationY + ( mouse.x - mouseDownStart ) * 5;
+				} else {
+					globeGroup.rotation.y -= 0.001;
 				}
+				if (globeGroup.rotation.y >= 0)
+					globeGroup.rotation.y = -0.001;
 
+				if (globeGroup.rotation.y <= -Math.PI * 6)
+					globeGroup.rotation.y = -Math.PI * 6 + 0.001;
+
+				// Swap the visibility of the objects depending on the rotation.
 				var floorRotation = Math.abs (Math.floor( (globeGroup.rotation.y - Math.PI) / (Math.PI * 2) )) - 1;
 				if (floorRotation != currentGroup) {
 					for (var i = 0; i < cityGroups.length; i++){
@@ -503,10 +513,42 @@
 				}
 				//console.log (floorRotation);
 
+				// find intersections
+				raycaster.setFromCamera( mouse, camera );
+				var intersects = raycaster.intersectObjects( raycastObjects.children );
+				if ( intersects.length > 0 ) {
+					INTERSECTED = intersects [0].object;
+					/*if ( INTERSECTED )
+						INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+					INTERSECTED = intersects [0].object;
+					intersects[0].material.emissive.setHex( 0xff0000 );*/
+					//console.log ("hit something");
+
+					/*for ( var i = 0; i < intersects.length; i++ ) {
+						intersects[ i ].object.material.color.set( 0xff0000 );
+					}*/
+				} else {
+					/*if ( INTERSECTED ) 
+						INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );*/
+					INTERSECTED = null;
+				}
+					/*if ( INTERSECTED != intersects[ 0 ].object ) {
+						if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+						INTERSECTED = intersects[ 0 ].object;
+						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+						INTERSECTED.material.emissive.setHex( 0xff0000 );
+					}
+				} else {
+					if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+					INTERSECTED = null;
+				}*/
+
+				// Camera
 				camera.lookAt( scene.position );
 
 				cameraCube.rotation.copy( camera.rotation );
 
+				// Lighting rotation around position.
 				pointLight.position.x = 1500 * Math.cos( timer );
 				pointLight.position.z = 1500 * Math.sin( timer );
 
