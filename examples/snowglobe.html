@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - materials - cube refraction [Lucy]</title>
+		<title>Juniper Holiday Card</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -27,7 +27,7 @@
 	</head>
 
 	<body>
-		<script src="../build/three.min.js"></script>
+		<script src="js/three.min.js"></script>
 
 		<script src="js/loaders/DDSLoader.js"></script>
 		<script src="js/loaders/MTLLoader.js"></script>
@@ -39,38 +39,39 @@
 
 		<script src="js/libs/stats.min.js"></script>
 		<script src="js/libs/dat.gui.min.js"></script>
+
+		<!--<script src="js/controls/OrbitControls.js"></script>-->
 		
 		<!-- 3D Text -->
 		<script src="js/geometries/TextGeometry.js"></script>
 		<script src="js/utils/FontUtils.js"></script>
 		<script src="fonts/helvetiker_regular.typeface.js"></script>
+		<script src="js/shaders/FresnelShader.js"></script>
 
 		<script>
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 			var FLOOR = -250;
+			var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024;
 
 			var container, stats;
 
 			var camera, scene, renderer;
-			var cameraCube, sceneCube, cubeTarget;
-
-			//var mesh, zmesh, geometry;
+			var controls;
+			var cameraCube, sceneCube, cubeTarget, particleScene;
 
 			var emitter, particleGroup;
 
-			var tloader, omloader, onProgress, onError;
+			var tloader, omloader, objloader, onProgress, onError;
 
-			var directionalLight, pointLight;
-
-			//var mouseX = 0, mouseY = 0;
+			var directionalLight, pointLight, spotLight, dirLight;
 
 			var windowHalfX = window.innerWidth / 2;
 			var windowHalfY = window.innerHeight / 2;
 
 			var mouseDown = false;
-			var mouseDownStart, startRotationY;
+			var mouseDownStart, startRotationY, targetRotationY;
 
 			var globeGroup;
 			var sunnyvaleGroup, bangaloreGroup, denmarkGroup, londonGroup;
@@ -89,8 +90,6 @@
 			var londonToggle = false;
 
 			init();
-			initParticles('textures/sprites/snowflake2.png');
-			//initParticles('textures/sprites/puppy.png');
 			animate();
 
 			function init() {
@@ -100,30 +99,84 @@
 
 				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
 				//var camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000 );
-				camera.position.z = 350;
+				camera.position.z = 400;
 				camera.position.y = 50;
 
 				cameraCube = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
 
+				loadingScene = new THREE.Scene();
 				scene = new THREE.Scene();
 				sceneCube = new THREE.Scene();
+				particleScene = new THREE.Scene();
 
 				// LIGHTS
-				var ambient = new THREE.AmbientLight( 0xffffff );
+				var ambient = new THREE.AmbientLight( 0x999999, 0.1 );
 				scene.add( ambient );
 
-				pointLight = new THREE.PointLight( 0xffffff, 2 );
+				/*var directionalLight = new THREE.DirectionalLight( 0xffffff, 10 );
+				directionalLight.position.set( 0, 100, 0 );
+				directionalLight.rotation.set( Math.PI/4, Math.PI/4, Math.PI/4 );
+				directionalLight.castShadow = true;
+				scene.add( directionalLight );*/
+
+				dirLight = new THREE.DirectionalLight( 0xffffff, 0.25 );
+				dirLight.color.setHSL( 0.1, 1, 0.95 );
+				dirLight.position.set( -0.25, 1, 0.25 );
+				dirLight.position.multiplyScalar( 50 );
+				scene.add( dirLight );
+
+				dirLight.castShadow = true;
+
+				/*dirLight.shadowMapWidth = 2048;
+				dirLight.shadowMapHeight = 2048;
+
+				var d = 50;
+
+				dirLight.shadowCameraLeft = -d;
+				dirLight.shadowCameraRight = d;
+				dirLight.shadowCameraTop = d;
+				dirLight.shadowCameraBottom = -d;
+
+				dirLight.shadowCameraFar = 3500;
+				dirLight.shadowBias = -0.0001;*/
+				//dirLight.shadowCameraVisible = true;
+
+				var dbox = new THREE.BoxGeometry( 10, 10, 10 );
+
+				var dmesh = new THREE.Mesh( dbox, new THREE.MeshBasicMaterial( { color: 0xffffff } ) );
+				//dmesh.scale.set( , 0.05, 0.05 );
+				//dirLight.add( dmesh );
+
+				/*spotLight = new THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 1 );
+				spotLight.position.set( 0, 1500, 1000 );
+				spotLight.target.position.set( 0, 0, 0 );
+
+				spotLight.castShadow = true;
+
+				spotLight.shadowCameraNear = 1200;
+				spotLight.shadowCameraFar = 2500;
+				spotLight.shadowCameraFov = 50;
+
+				//light.shadowCameraVisible = true;
+
+				spotLight.shadowBias = 0.0001;
+
+				spotLight.shadowMapWidth = SHADOW_MAP_WIDTH;
+				spotLight.shadowMapHeight = SHADOW_MAP_HEIGHT;*/
+
+				pointLight = new THREE.PointLight( 0xffffff, 0.9 );
+				pointLight.position.set (-250, 500, 500);
 				scene.add( pointLight );
 
 				// light representation
-				var sphere = new THREE.SphereGeometry( 100, 16, 8 );
+				/*var sphere = new THREE.SphereGeometry( 100, 16, 8 );
 
 				var mesh = new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) );
 				mesh.scale.set( 0.05, 0.05, 0.05 );
-				//pointLight.add( mesh );
+				pointLight.add( mesh );*/
 
 				// material samples
-				var r = "textures/cube/gray/";
+				var r = "textures/cube/gray2/";
 
 				var urls = [ r + "px.jpg", r + "nx.jpg",
 							 r + "py.jpg", r + "ny.jpg",
@@ -131,9 +184,9 @@
 
 				var textureCube = THREE.ImageUtils.loadTextureCube( urls, THREE.CubeRefractionMapping );
 
-				var cubeMaterial3 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9 } );
-				var cubeMaterial2 = new THREE.MeshBasicMaterial( { color: 0xccfffd, envMap: textureCube, refractionRatio: 0.985 } );
-				var cubeMaterial1 = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, refractionRatio: 0.98 } );
+				//var cubeMaterial3 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9 } );
+				//var cubeMaterial2 = new THREE.MeshBasicMaterial( { color: 0xccfffd, envMap: textureCube, refractionRatio: 0.985 } );
+				//var cubeMaterial1 = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, refractionRatio: 0.98 } );
 
 				// Skybox
 				var shader = THREE.ShaderLib[ "cube" ];
@@ -156,7 +209,28 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.autoClear = false;
+
 				container.appendChild( renderer.domElement );
+
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMapType = THREE.PCFSoftShadowMap;
+
+				//renderer.gammaInput = true;
+				//renderer.gammaOutput = true;
+
+				//renderer.shadowMap.cullFace = THREE.CullFaceBack;
+
+				/*renderer = new THREE.WebGLRenderer( { antialias: true } );
+				//renderer.setClearColor( scene.fog.color );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.cullFace = THREE.CullFaceBack;*/
 
 
 				// GUI Stats
@@ -182,6 +256,7 @@
 
 				omloader = new THREE.OBJMTLLoader();
 				tloader = new THREE.TextureLoader();
+				objloader = new THREE.OBJLoader();
 
 				THREE.DefaultLoadingManager.onLoad = function ( ) {
 				    console.log( "all done" );
@@ -200,29 +275,114 @@
 				// Each cityGroup will have its visiblity toggled based on rotation.
 				globeGroup = new THREE.Group();
 
+
 				// Back side reflective material.
-				var sphereGeometry1 = new THREE.SphereBufferGeometry( 100, 32, 16 );
-				var sphereMaterial1 = new THREE.MeshBasicMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity:0.9, side: THREE.BackSide } );
+				/*var sphereGeometry0 = new THREE.SphereBufferGeometry( 100, 64, 64 );
+				var sphereMaterial0 = new THREE.MeshBasicMaterial( { color: 0xccddff } );
+				var sphereMesh0 = new THREE.Mesh( sphereGeometry0, sphereMaterial0 );
+				sphereMesh0.castShadow = true;
+				sphereMesh0.visiblity = false;
+				globeGroup.add( sphereMesh0 );*/
+
+				
+
+
+				// Back side reflective material.
+				var fshader = THREE.FresnelShader;
+				var funiforms = THREE.UniformsUtils.clone( fshader.uniforms );
+				funiforms[ "tCube" ].value = textureCube;
+				var fparameters = { fragmentShader: fshader.fragmentShader, vertexShader: fshader.vertexShader, uniforms: funiforms, side: THREE.BackSide };
+				var sphereMaterial0 = new THREE.ShaderMaterial( fparameters );
+
+				var sphereGeometry0 = new THREE.SphereBufferGeometry( 100, 64, 64 );
+				//var sphereMaterial0 = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, reflectivity:1, transparent: true, opacity: 0.25 } );
+				var sphereMesh0 = new THREE.Mesh( sphereGeometry0, sphereMaterial0 );
+				globeGroup.add( sphereMesh0 );
+
+				// Front side reflective material.
+				var sphereGeometry1 = new THREE.SphereBufferGeometry( 100, 64, 64 );
+				var sphereMaterial1 = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, reflectivity: 0.9, transparent: true, opacity: 0.2 } );
 				var sphereMesh1 = new THREE.Mesh( sphereGeometry1, sphereMaterial1 );
 				globeGroup.add( sphereMesh1 );
+				
+				// Back side secondary material.
+				var sphereGeometry2 = new THREE.SphereBufferGeometry( 98, 64, 64 );
+				var sphereMaterial2 = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, refractionRatio: 0.98, side: THREE.BackSide } );
+				var sphereMesh2 = new THREE.Mesh( sphereGeometry2, sphereMaterial2 );
+				globeGroup.add( sphereMesh2 );
 
 				// Load base model.
-				omloader.load( 'obj/snowglobe/Base.obj', 'obj/snowglobe/Base.mtl', function ( object ) {
-					/*object.traverse(function(child) {
+				/*omloader.load( 'obj/snowglobe/Base.obj', 'obj/snowglobe/Base.mtl', function ( object ) {
+					object.traverse(function(child) {
 					    if(child instanceof THREE.Mesh) {
 					      	console.log(child.material);
-							child.material = new THREE.MeshLambertMaterial ( {
+							child.material = new THREE.MeshPhongMaterial ( {
 								map: child.material.map,
 								color: child.material.color,
+								//shininess: 50,
 								blending: THREE.SmoothShading
 							});
+							child.castShadow = true;
+							//child.receiveShadow = true;
 					    }
-					});*/
-					object.scale.set (60, 60, 60);
-					object.position.set (0, -60, 0);
+					});
+					object.scale.set (50, 50, 50);
+					object.position.set (0, -83, 0);
 					object.rotation.set (0, Math.PI, 0);
+
+					globeGroup.add( object );
+				}, onProgress, onError );*/
+
+				omloader.load( 'obj/snowglobe/baseNoLip.obj', 'obj/snowglobe/baseNoLip.mtl', function ( object ) {
+					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/baseNoLipColor.jpg');
+					object.traverse(function(child) {
+					    if(child instanceof THREE.Mesh) {
+					      	//console.log(child.material);
+							child.material = new THREE.MeshPhongMaterial ( {
+								//map: child.material.map,
+								//color: child.material.color,
+								map: texture,
+								color: child.material.color,
+								shininess: 20,
+								blending: THREE.SmoothShading
+							});
+							//child.castShadow = true;
+							//child.receiveShadow = true;
+					    }
+					});
+					object.scale.set (50, 50, 50);
+					object.position.set (0, -83, 0);
+					object.rotation.set (0, Math.PI, 0);
+
 					globeGroup.add( object );
 				}, onProgress, onError );
+
+
+				omloader.load( 'obj/snowglobe/trees.obj', 'obj/snowglobe/trees.mtl', function ( object ) {
+					//var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/baseNoLipColor.jpg');
+					object.traverse(function(child) {
+					    if(child instanceof THREE.Mesh) {
+					      	//console.log(child.material);
+							child.material = new THREE.MeshPhongMaterial ( {
+								map: child.material.map,
+								color: child.material.color,
+								//map: texture,
+								//color: child.material.color,
+								shininess: 20,
+								blending: THREE.SmoothShading
+							});
+							child.castShadow = true;
+							child.receiveShadow = true;
+					    }
+					});
+					object.scale.set (50, 50, 50);
+					object.position.set (0, -83, 0);
+					object.rotation.set (0, Math.PI, 0);
+
+					globeGroup.add( object );
+				}, onProgress, onError );
+
+
 
 				// Load back panel for all images in globe group.
 				var backGeometry = new THREE.CylinderGeometry( 95, 95, 1, 64 );
@@ -231,12 +391,12 @@
 				var backPlane = new THREE.Mesh( backGeometry, backMaterial );
 				backPlane.position.set (0, 0, -1);
 				backPlane.rotation.set (Math.PI/2, 0, 0);
+				//backPlane.castShadow = true;
 				globeGroup.add( backPlane );
 
-				tloader.load( 'textures/logo.png', function ( texture ) {
+				tloader.load( 'textures/jlogo.jpg', function ( texture ) {
 					var material = new THREE.MeshBasicMaterial( {
-						map: texture,
-						transparent: true
+						map: texture
 					} );
 					var geometry = new THREE.CircleGeometry (95, 64);
 					var plane = new THREE.Mesh( geometry, material );
@@ -246,14 +406,29 @@
 				}, onProgress, onError);
 
 
+				// Ground Plane.
+				/*var groundGeo = new THREE.BoxGeometry( 1000, 1, 1000 );
+				var groundMat = new THREE.MeshBasicMaterial( { color: 0xcccccc } );
+				var groundMesh = new THREE.Mesh( groundGeo, groundMat );
+				groundMesh.position.set (0, -100, 0);
+				//groundMesh.receiveShadow = true;
+				scene.add( groundMesh );*/
+				groundGeo = new THREE.CircleGeometry( 110, 64 );
+				var groundMat = new THREE.MeshBasicMaterial( { color: 0x000000, transparent: true, opacity: 0.1 } );
+				var groundMesh = new THREE.Mesh( groundGeo, groundMat );
+				groundMesh.rotation.set (-Math.PI/2, 0, 0);
+				groundMesh.position.set (15, -105, 5);
+				//groundMesh.receiveShadow = true;
+				scene.add( groundMesh );
+
+
 				///////////////
 				// SUNNYVALE //
 				///////////////
 				sunnyvaleGroup = new THREE.Group();
-				createSign ("Sunny Sunnyvale", sunnyvaleGroup);
 				createImage ('textures/sunnyvale.jpg', sunnyvaleGroup);
+				createSign ("Sunny Sunnyvale", sunnyvaleGroup);
 				globeGroup.add (sunnyvaleGroup);
-
 
 				///////////////
 				// BANGALORE //
@@ -263,7 +438,6 @@
 				createSign ("Beautiful Bangalore", bangaloreGroup);
 				globeGroup.add (bangaloreGroup);
 
-
 				/////////////
 				// DENMARK //
 				/////////////
@@ -271,7 +445,6 @@
 				createImage ('textures/denmark.jpg', denmarkGroup);
 				createSign ("Delightful Denmark", denmarkGroup);
 				globeGroup.add (denmarkGroup);
-
 
 				////////////
 				// LONDON //
@@ -298,31 +471,32 @@
 				raycastObjects = [];
 				createRaycastObject (
 					"sunnyvale",
-					new THREE.Vector3( 10, 4, 4 ), 
-					new THREE.Vector3( 0, 50, 20 ), 
+					new THREE.Vector3( 40, 40, 20 ), 
 					sunnyvaleGroup 
 				);
 
 				createRaycastObject (
 					"bangalore",
-					new THREE.Vector3( 10, 4, 4 ), 
-					new THREE.Vector3( 0, 50, 20 ), 
+					new THREE.Vector3( 10, 10, 20 ), 
 					bangaloreGroup 
 				);
 
 				createRaycastObject (
 					"denmark",
-					new THREE.Vector3( 10, 4, 4 ), 
-					new THREE.Vector3( 0, 50, 20 ), 
+					new THREE.Vector3( -20, -10, 20 ), 
 					denmarkGroup 
 				);
 
 				createRaycastObject (
 					"london",
-					new THREE.Vector3( 10, 4, 4 ), 
-					new THREE.Vector3( 0, 50, 20 ), 
+					new THREE.Vector3( -30, 30, 20 ), 
 					londonGroup 
 				);
+
+
+				// Holiday point lights and meshes.
+				//pointLight = new THREE.PointLight( 0xffffff, 2 );
+				//scene.add( pointLight );
 
 
 				// Functionality of each onClick action for raycasts.
@@ -363,11 +537,16 @@
 						londonToggle = !londonToggle;
 					}
 				};
-				
+
+
+				// Initialize particle emitters.
+				initParticles('textures/sprites/snowflake2.png');
+				//initParticles('textures/sprites/puppy.png');
+				//particleGroup.mesh.visible = false;
 
 
 				// GUI
-				var snowConfig = { snowLevel: 0.5 };
+				var snowConfig = { snowLevel: 0.1 };
 				var gui = new dat.GUI();
 				var snowGUI = gui.addFolder( "Snow Level" );
 				snowGUI.add( snowConfig, 'snowLevel', 0.1, 1 ).onChange( function() {
@@ -378,9 +557,23 @@
 
 				//
 
-				document.addEventListener('mousemove', onDocumentMouseMove, false);
-				document.addEventListener('mousedown', onDocumentMouseDown, false);
-				document.addEventListener('mouseup', onDocumentMouseUp, false);
+				//controls = new THREE.OrbitControls( camera );
+				//controls.addEventListener( 'change', render ); // add this only if there is no animation loop (requestAnimationFrame)
+				//controls.enableDamping = true;
+				//controls.dampingFactor = 0.25;
+				//controls.enableZoom = false;
+
+				//controls.addEventListener('mousemove', onDocumentMouseMove);
+				//controls.addEventListener('mousedown', onDocumentMouseDown);
+				//controls.addEventListener('mouseup', onDocumentMouseUp);
+
+
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false);
+				document.addEventListener( 'mousedown', onDocumentMouseDown, false);
+				document.addEventListener( 'mouseup', onDocumentMouseUp, false);
+				document.addEventListener( 'touchstart', touchstart, false );
+				document.addEventListener( 'touchmove', touchmove, false );
+				document.addEventListener( 'touchend', touchend, false);
 
 				//
 
@@ -389,8 +582,8 @@
 			}
 
 
-			function createRaycastObject ( name, attr, position, group ){
-				var rayGeo = new THREE.SphereGeometry( attr.x, attr.y, attr.z );
+			function createRaycastObject ( name, position, group ){
+				var rayGeo = new THREE.IcosahedronGeometry( 10, 0 );
 				var rayMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
 				var rayMesh = new THREE.Mesh( rayGeo, rayMaterial );
 				rayMesh.name = name;
@@ -415,16 +608,17 @@
 
 			function createSign ( text, group ){
 				// Create sign box.
-				var geometry = new THREE.BoxGeometry( 128, 26, 3 );
+				var geometry = new THREE.BoxGeometry( 100, 20, 1 );
 				var material = new THREE.MeshLambertMaterial( { color: 0xcccccc } );
 				var mesh = new THREE.Mesh( geometry, material );
-				mesh.position.set (0, -20, 60);
+				mesh.position.set (0, -50, 60);
+				mesh.castShadow = true;
 				group.add( mesh );
 
 				// Add text.
 				var text3D = new THREE.TextGeometry( text, {
-					size: 8,
-					height: 4,
+					size: 7,
+					height: 1,
 					curveSegments: 2,
 					font: "helvetiker"
 				});
@@ -435,7 +629,7 @@
 					new THREE.MeshPhongMaterial( { color: 0x000000, overdraw: 0.5 } )
 				] );
 				var textMesh = new THREE.Mesh( text3D, textMaterial );
-				textMesh.position.set (centerOffset, -22, 60);
+				textMesh.position.set (centerOffset, -50, 60);
 				textMesh.rotation.set (0, Math.PI * 2, 0);
 				group.add (textMesh);
 			}
@@ -470,9 +664,9 @@
 	                    value: new THREE.Vector3(0, -50, 0),
 	                },
 
-	                /*color: {
+	                color: {
 	                    value: [ new THREE.Color('white') ]
-	                },*/
+	                },
 
 	                size: {
 	                    value: [ 1, 10, 0 ],
@@ -480,12 +674,18 @@
 	                },
 
 	        		particleCount: 20000,
-	        		activeMultiplier: 0.5
+	        		activeMultiplier: 0.1
 	        	});
 
 
 	        	particleGroup.addEmitter( emitter );
-	        	scene.add( particleGroup.mesh );
+	        	particleScene.add( particleGroup.mesh );
+
+	        	var tgeo = new THREE.CylinderGeometry (100, 100, 30);
+	        	var tMaterial = new THREE.MeshBasicMaterial ( { transparent: true, opacity: 0 } );
+	        	var tMesh = new THREE.Mesh (tgeo, tMaterial);
+	        	tMesh.position.set (0, -70, 0);
+	        	particleScene.add(tMesh);
 	        }
 
 
@@ -507,20 +707,31 @@
 
 			function onDocumentMouseMove ( event ) {
 				event.preventDefault();
-
-				//mouse.x = ( event.clientX - windowHalfX );
-				//mouse.y = ( event.clientY - windowHalfY );
-
 				// calculate mouse position in normalized device coordinates
 				// (-1 to +1) for both components
-
 				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-				
 
-				//mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-				//mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+				// Find intersecting items from mouse raycast.
+				raycaster.setFromCamera( mouse, camera );
+				var intersects = raycaster.intersectObjects( raycastObjects );
+				if ( intersects.length > 0 ) {
+					if (INTERSECTED != intersects[0].object && INTERSECTED){
+						INTERSECTED.scale.set ( 1, 1, 1 );
+						INTERSECTED.material.wireframe = true;
+					}
+					INTERSECTED = intersects [0].object;
+					intersects [0].object.scale.set ( 1.5, 1.5, 1.5 );
+					intersects [0].object.material.wireframe = false;
+				} else {
+					if (INTERSECTED) {
+						INTERSECTED.scale.set ( 1, 1, 1 );
+						INTERSECTED.material.wireframe = true;
+						INTERSECTED = null;
+					}
+				}
 
+				targetRotationY = startRotationY + ( mouse.x - mouseDownStart ) * 5;
 			}
 
 			function onDocumentMouseDown ( event ) {
@@ -528,9 +739,10 @@
 				mouseDownStart = mouse.x;
 				startRotationY = globeGroup.rotation.y;
 
-				if (INTERSECTED)
+				if (INTERSECTED) {
+					console.log (INTERSECTED.name);
 					onClickFunctions[INTERSECTED.name]();
-					//console.log (INTERSECTED.name);
+				}
 			}
 
 			function onDocumentMouseUp ( event ) {
@@ -542,14 +754,81 @@
 				}
 			}
 
+
+
+			// Touch mobile events.
+			function touchmove ( event ) {
+				if (event.touches.length == 1){
+					event.preventDefault();
+					// calculate mouse position in normalized device coordinates
+					// (-1 to +1) for both components
+
+					//mouse.x = ( event.touches[0].pageX / window.innerWidth ) * 2 - 1;
+					//mouse.y = - ( event.touches[0].pageY / window.innerHeight ) * 2 + 1;
+					mouse.x = event.touches[ 0 ].pageX - windowHalfX;
+					mouse.y = event.touches[ 0 ].pageX - windowHalfY;
+
+					targetRotationY = startRotationY + ( mouse.x - mouseDownStart ) * 0.05;
+				}
+			}
+
+			function touchstart ( event ) {
+				if (event.touches.length == 1){
+					mouseDown = true;
+					//mouseDownStart = mouse.x;
+					mouse.x = event.touches[ 0 ].pageX - windowHalfX;
+					mouse.y = event.touches[ 0 ].pageX - windowHalfY;
+					mouseDownStart = event.touches[ 0 ].pageX - windowHalfX;
+					startRotationY = globeGroup.rotation.y;
+
+
+					raycaster.setFromCamera( mouse, camera );
+					var intersects = raycaster.intersectObjects( raycastObjects );
+					if ( intersects.length > 0 ) {
+						if (INTERSECTED != intersects[0].object && INTERSECTED){
+							INTERSECTED.scale.set ( 1, 1, 1 );
+							INTERSECTED.material.wireframe = true;
+						}
+						INTERSECTED = intersects [0].object;
+						intersects [0].object.scale.set ( 1.5, 1.5, 1.5 );
+						intersects [0].object.material.wireframe = false;
+					} else {
+						if (INTERSECTED) {
+							INTERSECTED.scale.set ( 1, 1, 1 );
+							INTERSECTED.material.wireframe = true;
+							INTERSECTED = null;
+						}
+					}
+
+					
+
+					if (INTERSECTED) {
+						console.log (INTERSECTED.name);
+						onClickFunctions[INTERSECTED.name]();
+					}
+				}
+			}
+
+			function touchend ( event ) {
+				mouseDown = false;
+				/*if ((mouse.x - mouseDownStart) > 100){
+					console.log ("rotate left");
+				} else if ((mouse.x - mouseDownStart) < -100){
+					console.log ("rotate right");
+				}*/
+			}
+
 			//
 
 			function animate() {
 
 				requestAnimationFrame( animate );
 
+				//controls.update();
+
 				render();
 				stats.update();
+				
 
 			}
 
@@ -560,12 +839,15 @@
 
 				//camera.position.x += ( mouse.x - camera.position.x ) * .05;
 				//camera.position.y += ( - mouse.y - camera.position.y ) * .05;
+
 				// Clamp the rotation of the globe.
 				if (mouseDown){
-					globeGroup.rotation.y = startRotationY + ( mouse.x - mouseDownStart ) * 5;
-				} else {
-					globeGroup.rotation.y -= 0.001;
+					globeGroup.rotation.y = targetRotationY;
 				}
+
+				//else {
+					//globeGroup.rotation.y -= 0.001;
+				//}
 				if (globeGroup.rotation.y >= 0)
 					globeGroup.rotation.y = -0.001;
 
@@ -581,38 +863,27 @@
 					cityGroups[floorRotation].visible = true;
 					currentGroup = floorRotation;
 				}
-				//console.log (floorRotation);
 
-				// find intersections
-				raycaster.setFromCamera( mouse, camera );
+				// Find intersecting items from mouse raycast.
+				/*raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( raycastObjects );
 				if ( intersects.length > 0 ) {
-					INTERSECTED = intersects [0].object;
-					/*if ( INTERSECTED )
-						INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-					INTERSECTED = intersects [0].object;
-					intersects[0].material.emissive.setHex( 0xff0000 );*/
-					//console.log ("hit something");
-
-					/*for ( var i = 0; i < intersects.length; i++ ) {
-						intersects[ i ].object.material.color.set( 0xff0000 );
-					}*/
-				} else {
-					/*if ( INTERSECTED ) 
-						INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );*/
-					INTERSECTED = null;
-				}
-					/*if ( INTERSECTED != intersects[ 0 ].object ) {
-						if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-						INTERSECTED = intersects[ 0 ].object;
-						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-						INTERSECTED.material.emissive.setHex( 0xff0000 );
+					if (INTERSECTED != intersects[0].object && INTERSECTED){
+						INTERSECTED.scale.set ( 1, 1, 1 );
+						INTERSECTED.material.wireframe = true;
 					}
+					INTERSECTED = intersects [0].object;
+					intersects [0].object.scale.set ( 1.5, 1.5, 1.5 );
+					intersects [0].object.material.wireframe = false;
 				} else {
-					if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-					INTERSECTED = null;
+					if (INTERSECTED) {
+						INTERSECTED.scale.set ( 1, 1, 1 );
+						INTERSECTED.material.wireframe = true;
+						INTERSECTED = null;
+					}
 				}*/
 
+				// Animate the rotations of the raycast items.
 				for (var i = 0; i < raycastObjects.length; i++){
 					raycastObjects[i].rotation.x += 0.01;
 					raycastObjects[i].rotation.y += 0.01;
@@ -626,12 +897,14 @@
 				cameraCube.rotation.copy( camera.rotation );
 
 				// Lighting rotation around position.
-				pointLight.position.x = 1500 * Math.cos( timer );
-				pointLight.position.z = 1500 * Math.sin( timer );
+				//pointLight.position.x = 1500 * Math.cos( timer );
+				//pointLight.position.z = 1500 * Math.sin( timer );
 
 				renderer.clear();
 				renderer.render( sceneCube, cameraCube );
 				renderer.render( scene, camera );
+				renderer.clearDepth(); // optional, depending on use case
+				renderer.render( particleScene, camera );
 
 			}
 
