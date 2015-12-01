@@ -70,6 +70,7 @@
 		<script src="js/utils/FontUtils.js"></script>
 		<script src="fonts/helvetiker_regular.typeface.js"></script>
 		<script src="fonts/Antenna Regular_Regular.js"></script>
+		<script src="fonts/Pacifico_Regular.js"></script>
 		<script src="js/shaders/FresnelShader.js"></script>
 
 		<script>
@@ -98,7 +99,7 @@
 			var mouseDownStart, startRotationY, targetRotationY;
 
 			var globeGroup;
-			var sunnyvaleGroup, bangaloreGroup, denmarkGroup, londonGroup;
+			var sunnyvaleGroup, moscowGroup, hongkongGroup, newjerseyGroup, westfordGroup, amsterdamGroup, ukGroup, bangaloreGroup;
 			var currentGroup = 0;
 			var cityGroups;
 			var palmTrees, cLights;
@@ -110,9 +111,13 @@
 			var onClickFunctions;
 
 			var sunnyvaleToggle = false;
+			var moscowToggle = false;
+			var hongkongToggle = false;
+			var newjerseyToggle = false;
+			var westfordToggle = false;
+			var amsterdamToggle = false;
+			var ukToggle = false;
 			var bangaloreToggle = false;
-			var denmarkToggle = false;
-			var londonToggle = false;
 
 			init();
 			animate();
@@ -266,8 +271,16 @@
 				globeGroup.add( sphereMesh2 );
 
 				// Load base model.
-				omloader.load( 'obj/snowglobe/baseNoLip.obj', 'obj/snowglobe/baseNoLip.mtl', function ( object ) {
-					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/baseNoLipColor2.jpg');
+				/*omloader.load( 'obj/snowglobe/baseNoLip.obj', 'obj/snowglobe/baseNoLip.mtl', function ( object ) {
+					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/baseNoLipColor2.jpg');*/
+				//omloader.load( 'obj/snowglobe/Base_Diffuse_SQUARE_v2.obj', 'obj/snowglobe/Base_Diffuse_SQUARE_v2.mtl', function ( object ) {
+				omloader.load( 'obj/snowglobe/Base2.obj', 'obj/snowglobe/Base2.mtl', function ( object ) {
+					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/Base_Diffuse_SQUARE.jpg');
+					texture.generateMipmaps = false;
+					texture.magFilter = THREE.LinearFilter;
+					texture.minFilter = THREE.LinearFilter;
+
+
 					object.traverse(function(child) {
 					    if(child instanceof THREE.Mesh) {
 					      	//console.log(child.material);
@@ -375,12 +388,12 @@
 				var cLightGeo = new THREE.SphereGeometry (1, 8, 8);
 				var cLightMatRed = new THREE.MeshBasicMaterial ( { color: 0xff0000 } );
 				var cLightMeshRed = new THREE.Mesh (cLightGeo, cLightMatRed);
-				cLightMeshRed.position.set ( 50, -40, 61 );
+				cLightMeshRed.position.set ( 40, -40, 61 );
 				rLights.add (cLightMeshRed);
 
-				for ( var i = 0; i < 10; i++){
+				for ( var i = 0; i < 8; i++){
 					var cLight = cLightMeshRed.clone();
-					cLight.position.set (-50 + (10 * i), -40, 61);
+					cLight.position.set (-40 + (10 * i), -40, 61);
 					rLights.add (cLight);
 				}
 
@@ -398,12 +411,12 @@
 
 				var cLightMatGreen = new THREE.MeshBasicMaterial ( { color: 0x00ff00 } );
 				var cLightMeshGreen = new THREE.Mesh (cLightGeo, cLightMatGreen);
-				cLightMeshGreen.position.set ( 45, -40, 61 );
+				cLightMeshGreen.position.set ( 35, -40, 61 );
 				gLights.add (cLightMeshGreen);
 
-				for ( var i = 0; i < 9; i++){
+				for ( var i = 0; i < 7; i++){
 					var cLight = cLightMeshGreen.clone();
-					cLight.position.set (-45 + (10 * i), -40, 61);
+					cLight.position.set (-35 + (10 * i), -40, 61);
 					gLights.add (cLight);
 				}
 
@@ -461,40 +474,77 @@
 				// SUNNYVALE //
 				///////////////
 				sunnyvaleGroup = new THREE.Group();
-				createImage ('textures/sunnyvale.jpg', sunnyvaleGroup);
+				createImage ('textures/locations/sunnyvale.jpg', sunnyvaleGroup);
 				createSign ("Sunny Sunnyvale", sunnyvaleGroup);
 				globeGroup.add (sunnyvaleGroup);
+
+				////////////
+				// MOSCOW //
+				////////////
+				moscowGroup = new THREE.Group();
+				createImage ('textures/locations/moscow.jpg', moscowGroup);
+				createSign ("Moscow", moscowGroup);
+				globeGroup.add (moscowGroup);
+
+				/////////////
+				// DENMARK //
+				/////////////
+				hongkongGroup = new THREE.Group();
+				createImage ('textures/locations/hongkong.jpg', hongkongGroup);
+				createSign ("Hong Kong", hongkongGroup);
+				globeGroup.add (hongkongGroup);
+
+				////////////////
+				// NEW JERSEY //
+				////////////////
+				newjerseyGroup = new THREE.Group();
+				createImage ('textures/locations/newjersey.jpg', newjerseyGroup);
+				createSign ("New Jersey", newjerseyGroup);
+				globeGroup.add (newjerseyGroup);
+
+				//////////////
+				// WESTFORD //
+				//////////////
+				westfordGroup = new THREE.Group();
+				createImage ('textures/locations/westford.jpg', westfordGroup);
+				createSign ("Westford", westfordGroup);
+				globeGroup.add (westfordGroup);
+
+				///////////////
+				// AMSTERDAM //
+				///////////////
+				amsterdamGroup = new THREE.Group();
+				createImage ('textures/locations/amsterdam.jpg', amsterdamGroup);
+				createSign ("Amsterdam", amsterdamGroup);
+				globeGroup.add (amsterdamGroup);
+
+				////////
+				// UK //
+				////////
+				ukGroup = new THREE.Group();
+				createImage ('textures/locations/uk.jpg', ukGroup);
+				createSign ("UK", ukGroup);
+				globeGroup.add (ukGroup);
 
 				///////////////
 				// BANGALORE //
 				///////////////
 				bangaloreGroup = new THREE.Group();
-				createImage ('textures/bangalore.jpg', bangaloreGroup);
+				createImage ('textures/locations/bangalore.jpg', bangaloreGroup);
 				createSign ("Beautiful Bangalore", bangaloreGroup);
 				globeGroup.add (bangaloreGroup);
 
-				/////////////
-				// DENMARK //
-				/////////////
-				denmarkGroup = new THREE.Group();
-				createImage ('textures/denmark.jpg', denmarkGroup);
-				createSign ("Delightful Denmark", denmarkGroup);
-				globeGroup.add (denmarkGroup);
-
-				////////////
-				// LONDON //
-				////////////
-				londonGroup = new THREE.Group();
-				createImage ('textures/london.jpg', londonGroup);
-				createSign ("Lovely London", londonGroup);
-				globeGroup.add (londonGroup);
-
 
 				// Add city groups to scene.
-				cityGroups = [ sunnyvaleGroup, bangaloreGroup, denmarkGroup, londonGroup ];
+				cityGroups = [ sunnyvaleGroup, moscowGroup, hongkongGroup, newjerseyGroup, westfordGroup, amsterdamGroup, ukGroup, bangaloreGroup ];
+				moscowGroup.visible = false;
+				hongkongGroup.visible = false;
+				newjerseyGroup.visible = false;
+				westfordGroup.visible = false;
+				amsterdamGroup.visible = false;
+				ukGroup.visible = false;
 				bangaloreGroup.visible = false;
-				denmarkGroup.visible = false;
-				londonGroup.visible = false;
+
 				globeGroup.rotation.y = -0.001;
 				scene.add (globeGroup);
 
@@ -511,21 +561,21 @@
 				);
 
 				createRaycastObject (
-					"bangalore",
+					"moscow",
 					new THREE.Vector3( 10, 10, 20 ), 
-					bangaloreGroup 
+					moscowGroup 
 				);
 
 				createRaycastObject (
-					"denmark",
+					"hongkong",
 					new THREE.Vector3( -20, -10, 20 ), 
-					denmarkGroup 
+					hongkongGroup 
 				);
 
 				createRaycastObject (
-					"london",
+					"newjersey",
 					new THREE.Vector3( -30, 30, 20 ), 
-					londonGroup 
+					newjerseyGroup 
 				);
 
 
@@ -545,8 +595,8 @@
 						sunnyvaleToggle = !sunnyvaleToggle;
 					},
 
-					'bangalore' : function (){
-						if (!bangaloreToggle) {
+					'moscow' : function (){
+						if (!moscowToggle) {
 							emitter.color.value = [ new THREE.Color('red'), new THREE.Color('green'), new THREE.Color('blue') ]; 
 							emitter.size.value = [ 1, 30, 0 ];
 						} else {
@@ -554,25 +604,25 @@
 							emitter.color.value = [ new THREE.Color('white') ]; 
 						}
 
-						bangaloreToggle = !bangaloreToggle;
+						moscowToggle = !moscowToggle;
 					},
 
-					'denmark' : function (){
-						if (!denmarkToggle)
+					'hongkong' : function (){
+						if (!hongkongToggle)
 							cLights.visible = true;
 						else
 							cLights.visible = false;
 
-						denmarkToggle = !denmarkToggle;
+						hongkongToggle = !hongkongToggle;
 					},
 
-					'london' : function (){
-						if (!londonToggle) {
-							emitter.isStatic = true;
+					'newjersey' : function (){
+						if (!newjerseyToggle) {
+							emitter.direction = -1;
 						} else {
-							emitter.isStatic = false;
+							emitter.direction = 1;
 						}
-						londonToggle = !londonToggle;
+						newjerseyToggle = !newjerseyToggle;
 					}
 				};
 
@@ -633,7 +683,7 @@
 
 			function createSign ( text, group ){
 				// Create sign box.
-				var geometry = new THREE.BoxGeometry( 100, 20, 1 );
+				var geometry = new THREE.BoxGeometry( 80, 20, 1 );
 				var material = new THREE.MeshLambertMaterial( { color: 0xcccccc } );
 				var mesh = new THREE.Mesh( geometry, material );
 				mesh.position.set (0, -50, 60);
@@ -646,7 +696,7 @@
 					height: 1,
 					curveSegments: 2,
 					//font: "helvetiker"
-					font: "Antenna Regular"
+					font: "Pacifico"
 				});
 				text3D.computeBoundingBox();
 				var centerOffset = -0.5 * ( text3D.boundingBox.max.x - text3D.boundingBox.min.x );
@@ -862,27 +912,23 @@
 
 			function render() {
 				particleGroup.tick( );
-				//particleGroup0.tick( );
-				//particleGroup1.tick( );
 
 				var timer = -0.0002 * Date.now();
-
-				//camera.position.x += ( mouse.x - camera.position.x ) * .05;
-				//camera.position.y += ( - mouse.y - camera.position.y ) * .05;
 
 				// Clamp the rotation of the globe.
 				if (mouseDown){
 					globeGroup.rotation.y = targetRotationY;
 				}
+				else {
+					// Rotate automatically.
+					globeGroup.rotation.y -= 0.001;
+				}
 
-				//else {
-					//globeGroup.rotation.y -= 0.001;
-				//}
 				if (globeGroup.rotation.y >= 0)
 					globeGroup.rotation.y = -0.001;
 
-				if (globeGroup.rotation.y <= -Math.PI * 6)
-					globeGroup.rotation.y = -Math.PI * 6 + 0.001;
+				if (globeGroup.rotation.y <= -Math.PI * 14)
+					globeGroup.rotation.y = -Math.PI * 14 + 0.001;
 
 				// Swap the visibility of the objects depending on the rotation.
 				var floorRotation = Math.abs (Math.floor( (globeGroup.rotation.y - Math.PI) / (Math.PI * 2) )) - 1;
@@ -893,25 +939,6 @@
 					cityGroups[floorRotation].visible = true;
 					currentGroup = floorRotation;
 				}
-
-				// Find intersecting items from mouse raycast.
-				/*raycaster.setFromCamera( mouse, camera );
-				var intersects = raycaster.intersectObjects( raycastObjects );
-				if ( intersects.length > 0 ) {
-					if (INTERSECTED != intersects[0].object && INTERSECTED){
-						INTERSECTED.scale.set ( 1, 1, 1 );
-						INTERSECTED.material.wireframe = true;
-					}
-					INTERSECTED = intersects [0].object;
-					intersects [0].object.scale.set ( 1.5, 1.5, 1.5 );
-					intersects [0].object.material.wireframe = false;
-				} else {
-					if (INTERSECTED) {
-						INTERSECTED.scale.set ( 1, 1, 1 );
-						INTERSECTED.material.wireframe = true;
-						INTERSECTED = null;
-					}
-				}*/
 
 				// Animate the rotations of the raycast items.
 				for (var i = 0; i < raycastObjects.length; i++){
