@@ -334,7 +334,7 @@
 
 				// Load base model.
 				omloader.load( 'obj/snowglobe/Base2.obj', 'obj/snowglobe/Base2.mtl', function ( object ) {
-					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/Base_Diffuse_SQUARE.jpg');
+					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/Base_Diffuse_SQUARE_g.jpg');
 					texture.generateMipmaps = false;
 					texture.magFilter = THREE.LinearFilter;
 					texture.minFilter = THREE.LinearFilter;
@@ -520,13 +520,21 @@
 
 
 				// Ground Plane shadow.
-				groundGeo = new THREE.CircleGeometry( 110, 64 );
+				/*groundGeo = new THREE.CircleGeometry( 110, 64 );
 				var groundMat = new THREE.MeshBasicMaterial( { color: 0x000000, transparent: true, opacity: 0.1 } );
 				var groundMesh = new THREE.Mesh( groundGeo, groundMat );
 				groundMesh.rotation.set (-Math.PI/2, 0, 0);
 				groundMesh.position.set (15, -105, 5);
-				//groundMesh.receiveShadow = true;
-				scene.add( groundMesh );
+				scene.add( groundMesh );*/
+				tloader.load( 'textures/PlainBase_Shadow.JPG', function ( texture ) {
+					groundGeo = new THREE.PlaneGeometry( 560, 560 );
+					var groundMat = new THREE.MeshBasicMaterial( { map: texture } );
+					var groundMesh = new THREE.Mesh( groundGeo, groundMat );
+					groundMesh.rotation.set (-Math.PI/2, 0, Math.PI);
+					groundMesh.position.set (0, -100, 0);
+					scene.add( groundMesh );
+				}, onProgress, onError);
+
 
 
 				///////////////
@@ -534,7 +542,7 @@
 				///////////////
 				sunnyvaleGroup = new THREE.Group();
 				createImage ('textures/locations/sunnyvale.jpg', sunnyvaleGroup);
-				createSign ("Sunny Sunnyvale", sunnyvaleGroup);
+				createSign ("textures/locations/titles/sunnyvale_t.jpg", sunnyvaleGroup);
 				globeGroup.add (sunnyvaleGroup);
 
 				////////////
@@ -542,7 +550,7 @@
 				////////////
 				moscowGroup = new THREE.Group();
 				createImage ('textures/locations/moscow.jpg', moscowGroup);
-				createSign ("Moscow", moscowGroup);
+				createSign ("textures/locations/titles/moscow_t.jpg", moscowGroup);
 				globeGroup.add (moscowGroup);
 
 				/////////////
@@ -550,7 +558,7 @@
 				/////////////
 				hongkongGroup = new THREE.Group();
 				createImage ('textures/locations/hongkong.jpg', hongkongGroup);
-				createSign ("Hong Kong", hongkongGroup);
+				createSign ("textures/locations/titles/hongkong_t.jpg", hongkongGroup);
 				globeGroup.add (hongkongGroup);
 
 				////////////////
@@ -558,7 +566,7 @@
 				////////////////
 				newjerseyGroup = new THREE.Group();
 				createImage ('textures/locations/newjersey.jpg', newjerseyGroup);
-				createSign ("New Jersey", newjerseyGroup);
+				createSign ("textures/locations/titles/newjersey_t.jpg", newjerseyGroup);
 				globeGroup.add (newjerseyGroup);
 
 				//////////////
@@ -566,7 +574,7 @@
 				//////////////
 				westfordGroup = new THREE.Group();
 				createImage ('textures/locations/westford.jpg', westfordGroup);
-				createSign ("Westford", westfordGroup);
+				createSign ("textures/locations/titles/westford_t.jpg", westfordGroup);
 				globeGroup.add (westfordGroup);
 
 				///////////////
@@ -574,7 +582,7 @@
 				///////////////
 				amsterdamGroup = new THREE.Group();
 				createImage ('textures/locations/amsterdam.jpg', amsterdamGroup);
-				createSign ("Amsterdam", amsterdamGroup);
+				createSign ("textures/locations/titles/amsterdam_t.jpg", amsterdamGroup);
 				globeGroup.add (amsterdamGroup);
 
 				////////
@@ -582,7 +590,7 @@
 				////////
 				ukGroup = new THREE.Group();
 				createImage ('textures/locations/uk.jpg', ukGroup);
-				createSign ("UK", ukGroup);
+				createSign ("textures/locations/titles/london_t.jpg", ukGroup);
 				globeGroup.add (ukGroup);
 
 				///////////////
@@ -590,7 +598,7 @@
 				///////////////
 				bangaloreGroup = new THREE.Group();
 				createImage ('textures/locations/bangalore.jpg', bangaloreGroup);
-				createSign ("Beautiful Bangalore", bangaloreGroup);
+				createSign ("textures/locations/titles/bangalore_t.jpg", bangaloreGroup);
 				globeGroup.add (bangaloreGroup);
 
 
@@ -740,8 +748,23 @@
 			}
 
 
-			function createSign ( text, group ){
+			function createSign ( url, group ){
 				// Create sign box.
+				tloader.load( url, function ( texture ) {
+					// Prevent texture generation.
+					texture.generateMipmaps = false;
+					texture.magFilter = THREE.LinearFilter;
+					texture.minFilter = THREE.LinearFilter;
+
+					// Generate geometry and material from texture url.
+					var geometry = new THREE.BoxGeometry( 80, 20, 1 );
+					var material = new THREE.MeshBasicMaterial( { map: texture } );
+					var mesh = new THREE.Mesh( geometry, material );
+					mesh.position.set (0, -50, 60);
+					mesh.castShadow = true;
+					group.add( mesh );
+				});
+				/*
 				var geometry = new THREE.BoxGeometry( 80, 20, 1 );
 				var material = new THREE.MeshLambertMaterial( { color: 0xcccccc } );
 				var mesh = new THREE.Mesh( geometry, material );
@@ -766,7 +789,7 @@
 				var textMesh = new THREE.Mesh( text3D, textMaterial );
 				textMesh.position.set (centerOffset, -50, 60);
 				textMesh.rotation.set (0, Math.PI * 2, 0);
-				group.add (textMesh);
+				group.add (textMesh);*/
 			}
 
 
@@ -971,7 +994,7 @@
 				}
 				else {
 					// Rotate automatically.
-					globeGroup.rotation.y -= 0.001;
+					globeGroup.rotation.y -= 0.002;
 				}
 
 				if (globeGroup.rotation.y >= 0)

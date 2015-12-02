@@ -51,6 +51,17 @@
 				font-family: antenna;
 			}
 
+			div#footerslider{
+				position: absolute;
+				top: 275px;
+				right: 5px;
+				width: 100px;
+				text-align: center;
+				z-index : 100;
+				color: #333;
+				font-family: antenna;
+			}
+
 			div#slider {
 				position: absolute;
 				top : 50px;
@@ -58,6 +69,12 @@
 				width: 10px;
 				height: 200px;
 				z-index : 100;
+			}
+
+			div#audio {
+				position: absolute;
+				top : 0px;
+				left: 0px;
 			}
 		</style>
 
@@ -87,11 +104,17 @@
 
 	<body>
 		<div id="slider_container">
-			<div id="titleslider">Snow Level</div>
+			<div id="titleslider">Blizzard</div>
 			<div id="slider"></div>
+			<div id="footerslider">Flurry</div>
 		</div>
 		<div id="progressbar"></div>
-
+		
+		<div id='audio'>
+			<audio loop="loop" autoplay="autoplay" controls="controls"> 
+			   <source src="audio/juniper-holiday.mp3" />  
+			</audio> 
+		</div>
 
 		<script src="js/three.min.js"></script>
 
@@ -115,6 +138,15 @@
 		<script src="fonts/Antenna Regular_Regular.js"></script>
 		<script src="fonts/Pacifico_Regular.js"></script>
 		<script src="js/shaders/FresnelShader.js"></script>
+		
+		<!-- Post Processing files -->
+		<script src="js/postprocessing/EffectComposer.js"></script>
+		<script src="js/postprocessing/RenderPass.js"></script>
+		<script src="js/postprocessing/ShaderPass.js"></script>
+		<script src="js/postprocessing/MaskPass.js"></script>
+		<script src="js/shaders/CopyShader.js"></script>
+		<script src="js/shaders/VignetteShader.js"></script>
+		
 
 		<script>
 
@@ -122,6 +154,7 @@
 
 			var FLOOR = -250;
 			var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024;
+			var clock = new THREE.Clock();
 
 			var container, stats;
 
@@ -163,6 +196,10 @@
 			var bangaloreToggle = false;
 
 			var loaded = false;
+
+			var composer;
+			var shaderActive = "none";
+
 			
 			$(function(){
 				$("#slider_container").hide();
@@ -230,7 +267,8 @@
 				dirLight.position.multiplyScalar( 50 );
 				scene.add( dirLight );
 
-				dirLight.castShadow = true;
+				// Enable/Disable shadow casting.
+				//dirLight.castShadow = true;
 
 				var dbox = new THREE.BoxGeometry( 10, 10, 10 );
 				var dmesh = new THREE.Mesh( dbox, new THREE.MeshBasicMaterial( { color: 0xffffff } ) );
@@ -359,7 +397,7 @@
 
 				// Load base model.
 				omloader.load( 'obj/snowglobe/Base2.obj', 'obj/snowglobe/Base2.mtl', function ( object ) {
-					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/Base_Diffuse_SQUARE.jpg');
+					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/Base_Diffuse_SQUARE_g.jpg');
 					texture.generateMipmaps = false;
 					texture.magFilter = THREE.LinearFilter;
 					texture.minFilter = THREE.LinearFilter;
@@ -525,18 +563,19 @@
 
 				// Load back panel for all images in globe group.
 				var backGeometry = new THREE.CylinderGeometry( 95, 95, 1, 64 );
-				var backMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+				var backMaterial = new THREE.MeshBasicMaterial( { color: 0xeeeeee } );
 				var backPlane = new THREE.Mesh( backGeometry, backMaterial );
 				backPlane.position.set (0, 0, -1);
 				backPlane.rotation.set (Math.PI/2, 0, 0);
 				//backPlane.castShadow = true;
 				globeGroup.add( backPlane );
 
-				tloader.load( 'textures/jlogo.jpg', function ( texture ) {
+				tloader.load( 'textures/juniper-logo.png', function ( texture ) {
 					var material = new THREE.MeshBasicMaterial( {
-						map: texture
+						map: texture,
+						alphaTest: 0.5
 					} );
-					var geometry = new THREE.CircleGeometry (95, 64);
+					var geometry = new THREE.CircleGeometry (70, 64);
 					var plane = new THREE.Mesh( geometry, material );
 					plane.rotation.set (0, Math.PI, 0);
 					plane.position.set (0, 0, -2);
@@ -545,13 +584,21 @@
 
 
 				// Ground Plane shadow.
-				groundGeo = new THREE.CircleGeometry( 110, 64 );
+				/*groundGeo = new THREE.CircleGeometry( 110, 64 );
 				var groundMat = new THREE.MeshBasicMaterial( { color: 0x000000, transparent: true, opacity: 0.1 } );
 				var groundMesh = new THREE.Mesh( groundGeo, groundMat );
 				groundMesh.rotation.set (-Math.PI/2, 0, 0);
 				groundMesh.position.set (15, -105, 5);
 				//groundMesh.receiveShadow = true;
-				scene.add( groundMesh );
+				scene.add( groundMesh );*/
+				tloader.load( 'textures/PlainBase_Shadow.JPG', function ( texture ) {
+					groundGeo = new THREE.PlaneGeometry( 570, 570 );
+					var groundMat = new THREE.MeshBasicMaterial( { map: texture } );
+					var groundMesh = new THREE.Mesh( groundGeo, groundMat );
+					groundMesh.rotation.set (-Math.PI/2, 0, Math.PI);
+					groundMesh.position.set (0, -100, -6);
+					scene.add( groundMesh );
+				}, onProgress, onError);
 
 
 				///////////////
@@ -559,7 +606,7 @@
 				///////////////
 				sunnyvaleGroup = new THREE.Group();
 				createImage ('textures/locations/sunnyvale.jpg', sunnyvaleGroup);
-				createSign ("Sunny Sunnyvale", sunnyvaleGroup);
+				createSign ("textures/locations/titles/sunnyvale_t.jpg", sunnyvaleGroup);
 				globeGroup.add (sunnyvaleGroup);
 
 				////////////
@@ -567,7 +614,7 @@
 				////////////
 				moscowGroup = new THREE.Group();
 				createImage ('textures/locations/moscow.jpg', moscowGroup);
-				createSign ("Moscow", moscowGroup);
+				createSign ("textures/locations/titles/moscow_t.jpg", moscowGroup);
 				globeGroup.add (moscowGroup);
 
 				/////////////
@@ -575,7 +622,7 @@
 				/////////////
 				hongkongGroup = new THREE.Group();
 				createImage ('textures/locations/hongkong.jpg', hongkongGroup);
-				createSign ("Hong Kong", hongkongGroup);
+				createSign ("textures/locations/titles/hongkong_t.jpg", hongkongGroup);
 				globeGroup.add (hongkongGroup);
 
 				////////////////
@@ -583,7 +630,7 @@
 				////////////////
 				newjerseyGroup = new THREE.Group();
 				createImage ('textures/locations/newjersey.jpg', newjerseyGroup);
-				createSign ("New Jersey", newjerseyGroup);
+				createSign ("textures/locations/titles/newjersey_t.jpg", newjerseyGroup);
 				globeGroup.add (newjerseyGroup);
 
 				//////////////
@@ -591,7 +638,7 @@
 				//////////////
 				westfordGroup = new THREE.Group();
 				createImage ('textures/locations/westford.jpg', westfordGroup);
-				createSign ("Westford", westfordGroup);
+				createSign ("textures/locations/titles/westford_t.jpg", westfordGroup);
 				globeGroup.add (westfordGroup);
 
 				///////////////
@@ -599,7 +646,7 @@
 				///////////////
 				amsterdamGroup = new THREE.Group();
 				createImage ('textures/locations/amsterdam.jpg', amsterdamGroup);
-				createSign ("Amsterdam", amsterdamGroup);
+				createSign ("textures/locations/titles/amsterdam_t.jpg", amsterdamGroup);
 				globeGroup.add (amsterdamGroup);
 
 				////////
@@ -607,7 +654,7 @@
 				////////
 				ukGroup = new THREE.Group();
 				createImage ('textures/locations/uk.jpg', ukGroup);
-				createSign ("UK", ukGroup);
+				createSign ("textures/locations/titles/london_t.jpg", ukGroup);
 				globeGroup.add (ukGroup);
 
 				///////////////
@@ -615,7 +662,7 @@
 				///////////////
 				bangaloreGroup = new THREE.Group();
 				createImage ('textures/locations/bangalore.jpg', bangaloreGroup);
-				createSign ("Beautiful Bangalore", bangaloreGroup);
+				createSign ("textures/locations/titles/bangalore_t.jpg", bangaloreGroup);
 				globeGroup.add (bangaloreGroup);
 
 
@@ -738,6 +785,8 @@
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
+				//setupShaderVignette();
+
 			}
 
 
@@ -765,17 +814,25 @@
 			}
 
 
-			function createSign ( text, group ){
+			function createSign ( url, group ){
 				// Create sign box.
-				var geometry = new THREE.BoxGeometry( 80, 20, 1 );
-				var material = new THREE.MeshLambertMaterial( { color: 0xcccccc } );
-				var mesh = new THREE.Mesh( geometry, material );
-				mesh.position.set (0, -50, 60);
-				mesh.castShadow = true;
-				group.add( mesh );
+				tloader.load( url, function ( texture ) {
+					// Prevent texture generation.
+					texture.generateMipmaps = false;
+					texture.magFilter = THREE.LinearFilter;
+					texture.minFilter = THREE.LinearFilter;
+
+					// Generate geometry and material from texture url.
+					var geometry = new THREE.BoxGeometry( 80, 20, 1 );
+					var material = new THREE.MeshBasicMaterial( { map: texture } );
+					var mesh = new THREE.Mesh( geometry, material );
+					mesh.position.set (0, -47, 60);
+					mesh.castShadow = true;
+					group.add( mesh );
+				});
 
 				// Add text.
-				var text3D = new THREE.TextGeometry( text, {
+				/*var text3D = new THREE.TextGeometry( text, {
 					size: 5,
 					height: 1,
 					curveSegments: 2,
@@ -791,7 +848,7 @@
 				var textMesh = new THREE.Mesh( text3D, textMaterial );
 				textMesh.position.set (centerOffset, -50, 60);
 				textMesh.rotation.set (0, Math.PI * 2, 0);
-				group.add (textMesh);
+				group.add (textMesh);*/
 			}
 
 
@@ -970,6 +1027,22 @@
 				mouseDown = false;
 			}
 
+
+			function setupShaderVignette (){
+				composer = new THREE.EffectComposer( renderer );
+				composer.addPass( new THREE.RenderPass( scene, camera ) );
+
+				var shaderVignette = THREE.VignetteShader;
+				var effectVignette = new THREE.ShaderPass( shaderVignette );
+				// larger values = darker closer to center
+				// darkness < 1  => lighter edges
+				effectVignette.uniforms[ "offset" ].value = .1;
+				effectVignette.uniforms[ "darkness" ].value = .1;
+				effectVignette.renderToScreen = true;
+				composer.addPass(effectVignette);
+				shaderActive = "vignette";
+			}
+
 			//
 
 			function animate() {
@@ -995,7 +1068,7 @@
 				}
 				else {
 					// Rotate automatically.
-					globeGroup.rotation.y -= 0.001;
+					globeGroup.rotation.y -= 0.002;
 				}
 
 				if (globeGroup.rotation.y >= 0)
@@ -1049,7 +1122,12 @@
 
 				renderer.clear();
 				renderer.render( sceneCube, cameraCube );
-				renderer.render( scene, camera );
+				
+				//if ( shaderActive == "none" )
+					renderer.render( scene, camera );
+				/*else
+					composer.render();*/
+
 				renderer.clearDepth(); // optional, depending on use case
 				renderer.render( particleScene, camera );
 			}
