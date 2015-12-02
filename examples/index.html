@@ -2,6 +2,11 @@
 <html lang="en">
 	<head>
 		<title>Juniper Holiday Card</title>
+
+		<script src="js/jquery/jquery.js"></script>
+		<script src="js/jquery/jquery-ui.js"></script>
+		<link href="js/jquery/jquery-ui.css" rel="stylesheet">
+
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -52,6 +57,7 @@
 	<body>
 		<script src="js/three.min.js"></script>
 
+
 		<script src="js/loaders/DDSLoader.js"></script>
 		<script src="js/loaders/MTLLoader.js"></script>
 		<script src="js/loaders/OBJMTLLoader.js"></script>
@@ -73,12 +79,16 @@
 		<script src="fonts/Pacifico_Regular.js"></script>
 		<script src="js/shaders/FresnelShader.js"></script>
 
+		<div id="progressbar"></div>
+
 		<script>
 
 			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 			var FLOOR = -250;
 			var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024;
+
+			var clock = new THREE.Clock();
 
 			var container, stats;
 
@@ -119,8 +129,21 @@
 			var ukToggle = false;
 			var bangaloreToggle = false;
 
-			init();
-			animate();
+			var loaded = false;
+
+			$(function() {
+				$( "#progressbar" ).progressbar({
+					value: 0
+				}).ready( function () {
+					console.log ("done progress bar");
+					init ();
+					animate();
+				});
+			});
+
+			//init();
+			//animate();
+			
 
 			function init() {
 
@@ -138,6 +161,10 @@
 				scene = new THREE.Scene();
 				sceneCube = new THREE.Scene();
 				particleScene = new THREE.Scene();
+
+				scene.visible = false;
+				sceneCube.visible = false;
+				particleScene.visible = false;
 
 				// LIGHTS
 				var ambient = new THREE.AmbientLight( 0x999999, 0.1 );
@@ -161,11 +188,10 @@
 				scene.add( pointLight );
 
 				// light representation
-				/*var sphere = new THREE.SphereGeometry( 100, 16, 8 );
-
-				var mesh = new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) );
-				mesh.scale.set( 0.05, 0.05, 0.05 );
-				pointLight.add( mesh );*/
+				//var sphere = new THREE.SphereGeometry( 100, 16, 8 );
+				//var mesh = new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) );
+				//mesh.scale.set( 0.05, 0.05, 0.05 );
+				//pointLight.add( mesh );
 
 				// material samples
 				var r = "textures/cube/gray2/";
@@ -207,7 +233,7 @@
 				// GUI Stats
 				stats = new Stats();
 				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.top = '0px';
+				stats.domElement.style.bottom = '0px';
 				stats.domElement.style.zIndex = 100;
 				container.appendChild( stats.domElement );
 
@@ -231,10 +257,16 @@
 
 				THREE.DefaultLoadingManager.onLoad = function ( ) {
 				    console.log( "all done" );
+				    $('#progressbar').hide();
+				    scene.visible = true;
+					sceneCube.visible = true;
+					particleScene.visible = true;
 				};
 
 				THREE.DefaultLoadingManager.onProgress = function ( item, loaded, total ) {
 					console.log( item, loaded, total );
+					$( "#progressbar" ).progressbar( "option", "value", (loaded / total) * 100);
+					//console.log ($( "#progressbar" ).progressbar( "option", "value" ));
 				};
 
 				/////////////////
@@ -271,9 +303,6 @@
 				globeGroup.add( sphereMesh2 );
 
 				// Load base model.
-				/*omloader.load( 'obj/snowglobe/baseNoLip.obj', 'obj/snowglobe/baseNoLip.mtl', function ( object ) {
-					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/baseNoLipColor2.jpg');*/
-				//omloader.load( 'obj/snowglobe/Base_Diffuse_SQUARE_v2.obj', 'obj/snowglobe/Base_Diffuse_SQUARE_v2.mtl', function ( object ) {
 				omloader.load( 'obj/snowglobe/Base2.obj', 'obj/snowglobe/Base2.mtl', function ( object ) {
 					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/Base_Diffuse_SQUARE.jpg');
 					texture.generateMipmaps = false;
@@ -632,14 +661,14 @@
 
 
 				// GUI
-				var snowConfig = { snowLevel: 0.1 };
+				/*var snowConfig = { snowLevel: 0.1 };
 				var gui = new dat.GUI();
 				var snowGUI = gui.addFolder( "Snow Level" );
 				snowGUI.add( snowConfig, 'snowLevel', 0.1, 1 ).onChange( function() {
 					emitter.activeMultiplier = snowConfig.snowLevel;
 					mouseDown = false;
 				});
-				snowGUI.open();
+				snowGUI.open();*/
 
 				//
 
@@ -826,11 +855,6 @@
 
 			function onDocumentMouseUp ( event ) {
 				mouseDown = false;
-				/*if ((mouse.x - mouseDownStart) > 100){
-					console.log ("rotate left");
-				} else if ((mouse.x - mouseDownStart) < -100){
-					console.log ("rotate right");
-				}*/
 			}
 
 
@@ -845,7 +869,7 @@
 					//mouse.x = ( event.touches[0].pageX / window.innerWidth ) * 2 - 1;
 					//mouse.y = - ( event.touches[0].pageY / window.innerHeight ) * 2 + 1;
 					mouse.x = event.touches[ 0 ].pageX - windowHalfX;
-					mouse.y = event.touches[ 0 ].pageX - windowHalfY;
+					mouse.y = event.touches[ 0 ].pageY - windowHalfY;
 
 					targetRotationY = startRotationY + ( mouse.x - mouseDownStart ) * 0.05;
 				}
@@ -854,7 +878,7 @@
 			function touchstart ( event ) {
 				if (event.touches.length == 1){
 					mouse.x = event.touches[ 0 ].pageX - windowHalfX;
-					mouse.y = event.touches[ 0 ].pageX - windowHalfY;
+					mouse.y = event.touches[ 0 ].pageY - windowHalfY;
 					mouseDown = true;
 					mouseDownStart = event.touches[ 0 ].pageX - windowHalfX;
 					startRotationY = globeGroup.rotation.y;
@@ -889,11 +913,6 @@
 
 			function touchend ( event ) {
 				mouseDown = false;
-				/*if ((mouse.x - mouseDownStart) > 100){
-					console.log ("rotate left");
-				} else if ((mouse.x - mouseDownStart) < -100){
-					console.log ("rotate right");
-				}*/
 			}
 
 			//
@@ -978,7 +997,6 @@
 				renderer.render( scene, camera );
 				renderer.clearDepth(); // optional, depending on use case
 				renderer.render( particleScene, camera );
-
 			}
 
 		</script>

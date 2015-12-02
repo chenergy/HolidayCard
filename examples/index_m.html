@@ -243,8 +243,13 @@
 				globeGroup.add( sphereMesh2 );
 
 				// Load base model.
-				omloader.load( 'obj/snowglobe/PlainBase.obj', 'obj/snowglobe/PlainBase.mtl', function ( object ) {
-					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/Base_Diffuse_square.jpg');
+				omloader.load( 'obj/snowglobe/Base2.obj', 'obj/snowglobe/Base2.mtl', function ( object ) {
+					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/Base_Diffuse_SQUARE.jpg');
+					texture.generateMipmaps = false;
+					texture.magFilter = THREE.LinearFilter;
+					texture.minFilter = THREE.LinearFilter;
+
+
 					object.traverse(function(child) {
 					    if(child instanceof THREE.Mesh) {
 					      	//console.log(child.material);
