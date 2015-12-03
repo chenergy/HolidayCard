@@ -142,7 +142,7 @@
 			var loaded = false;
 			
 			$(function(){
-				$("#slider_container").hide();
+				$( "#slider_container" ).hide();
 			});
 
 			$(function() {
@@ -997,11 +997,25 @@
 					globeGroup.rotation.y -= 0.002;
 				}
 
-				if (globeGroup.rotation.y >= 0)
+				/*if (globeGroup.rotation.y >= 0)
 					globeGroup.rotation.y = -0.001;
 
 				if (globeGroup.rotation.y <= -Math.PI * 14)
-					globeGroup.rotation.y = -Math.PI * 14 + 0.001;
+					globeGroup.rotation.y = -Math.PI * 14 + 0.001;*/
+				// Reset rotation if rotation is past Math.PI or -Math.PI * 15.
+
+				// Reset rotation if rotation is past Math.PI or -Math.PI * 15.
+				if (globeGroup.rotation.y > Math.PI) {
+					globeGroup.rotation.y = -Math.PI * 15 + 0.001;
+					mouseDownStart = mouse.x;
+					startRotationY = globeGroup.rotation.y;
+				}
+
+				if (globeGroup.rotation.y < -Math.PI * 15) {
+					globeGroup.rotation.y = Math.PI - 0.001;
+					mouseDownStart = mouse.x;
+					startRotationY = globeGroup.rotation.y;
+				}
 
 				// Swap the visibility of the objects depending on the rotation.
 				var floorRotation = Math.abs (Math.floor( (globeGroup.rotation.y - Math.PI) / (Math.PI * 2) )) - 1;
