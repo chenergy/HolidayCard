@@ -76,6 +76,12 @@
 				top : 0px;
 				left: 0px;
 			}
+
+			.ui-slider-vertical .ui-state-default {
+				background: white url(js/jquery/images/blackSlider.jpg) no-repeat scroll 50% 50%;
+				height: 50px;
+				color: #000000;
+			}
 		</style>
 
 		<script>
@@ -196,6 +202,7 @@
 			var bangaloreToggle = false;
 
 			var loaded = false;
+			var startRotation = false;
 
 			var composer;
 			var shaderActive = "none";
@@ -351,6 +358,7 @@
 				    console.log( "all done" );
 				    $('#progressbar').hide();
 				    $('#slider_container').show();
+				    startRotation = true;
 				    scene.visible = true;
 					sceneCube.visible = true;
 					particleScene.visible = true;
@@ -449,116 +457,6 @@
 
 					globeGroup.add( object );
 				}, onProgress, onError );
-
-
-				// Load palm trees.
-				palmTrees = new THREE.Group();
-				omloader.load( 'obj/snowglobe/MY_PALM.obj', 'obj/snowglobe/MY_PALM.mtl', function ( object ) {
-					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/palm1_uv_m2.bmp');
-					object.traverse(function(child) {
-					    if(child instanceof THREE.Mesh) {
-					      	//console.log(child.material);
-							child.material = new THREE.MeshPhongMaterial ( {
-								map: texture,
-								//color: child.material.color,
-								shininess: 20,
-								blending: THREE.SmoothShading
-							});
-							//child.castShadow = true;
-							//child.receiveShadow = true;
-					    }
-					});
-					object.scale.set (0.05, 0.05, 0.05);
-					object.position.set (-20, -60, 10);
-					object.rotation.set (0, Math.PI, 0);
-					palmTrees.add( object );
-
-					var tree0 = object.clone();
-					tree0.scale.set (0.05, 0.05, 0.05);
-					tree0.position.set (-40, -60, -30);
-					tree0.rotation.set (0, -Math.PI / 2, 0);
-					palmTrees.add( tree0 );
-
-					var tree1 = object.clone();
-					tree1.scale.set (0.045, 0.045, 0.045);
-					tree1.position.set (-40, -60, 30);
-					tree1.rotation.set (0, Math.PI / 2, 0);
-					palmTrees.add( tree1 );
-
-					var tree2 = object.clone();
-					tree2.scale.set (0.04, 0.04, 0.04);
-					tree2.position.set (0, -60, 10);
-					tree2.rotation.set (0, 0, 0);
-					palmTrees.add( tree2 );
-
-					var tree3 = object.clone();
-					tree3.scale.set (0.04, 0.04, 0.04);
-					tree3.position.set (40, -60, 20);
-					tree3.rotation.set (0, Math.PI / 3, 0);
-					palmTrees.add( tree3 );
-
-				}, onProgress, onError );
-				palmTrees.visible = false;
-				globeGroup.add (palmTrees);
-
-
-				// Create christmas lights.
-				cLights = new THREE.Group();
-				rLights = new THREE.Group();
-				gLights = new THREE.Group();
-
-				var cLightGeo = new THREE.SphereGeometry (1, 8, 8);
-				var cLightMatRed = new THREE.MeshBasicMaterial ( { color: 0xff0000 } );
-				var cLightMeshRed = new THREE.Mesh (cLightGeo, cLightMatRed);
-				cLightMeshRed.position.set ( 40, -40, 61 );
-				rLights.add (cLightMeshRed);
-
-				for ( var i = 0; i < 8; i++){
-					var cLight = cLightMeshRed.clone();
-					cLight.position.set (-40 + (10 * i), -40, 61);
-					rLights.add (cLight);
-				}
-
-				var cLightR0 = cLightMeshRed.clone ();
-				cLightR0.position.set ( -15, -45, 28.5 );
-				rLights.add (cLightR0);
-
-				var cLightR1 = cLightMeshRed.clone ();
-				cLightR1.position.set ( -37, -35, 17 );
-				rLights.add (cLightR1);
-
-				var cLightR2 = cLightMeshRed.clone ();
-				cLightR2.position.set ( -31, -43, 35 );
-				rLights.add (cLightR2);
-
-				var cLightMatGreen = new THREE.MeshBasicMaterial ( { color: 0x00ff00 } );
-				var cLightMeshGreen = new THREE.Mesh (cLightGeo, cLightMatGreen);
-				cLightMeshGreen.position.set ( 35, -40, 61 );
-				gLights.add (cLightMeshGreen);
-
-				for ( var i = 0; i < 7; i++){
-					var cLight = cLightMeshGreen.clone();
-					cLight.position.set (-35 + (10 * i), -40, 61);
-					gLights.add (cLight);
-				}
-
-				var cLightG0 = cLightMeshGreen.clone ();
-				cLightG0.position.set ( 33, -40, 17 );
-				gLights.add (cLightG0);
-
-				var cLightG1 = cLightMeshGreen.clone ();
-				cLightG1.position.set ( -33, -35, 34 );
-				gLights.add (cLightG1);
-
-				var cLightG2 = cLightMeshGreen.clone ();
-				cLightG2.position.set ( -43, -40, 24 );
-				gLights.add (cLightG2);
-
-				cLights.add (rLights);
-				cLights.add (gLights);
-				cLights.visible = false;
-				globeGroup.add (cLights);
-
 
 
 				// Load back panel for all images in globe group.
@@ -708,6 +606,115 @@
 					new THREE.Vector3( -30, 30, 20 ), 
 					newjerseyGroup 
 				);
+
+
+				// Load palm trees.
+				palmTrees = new THREE.Group();
+				omloader.load( 'obj/snowglobe/MY_PALM.obj', 'obj/snowglobe/MY_PALM.mtl', function ( object ) {
+					var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/palm1_uv_m2.bmp');
+					object.traverse(function(child) {
+					    if(child instanceof THREE.Mesh) {
+					      	//console.log(child.material);
+							child.material = new THREE.MeshLambertMaterial ( {
+								map: texture,
+								//color: child.material.color,
+								//shininess: 20,
+								//blending: THREE.SmoothShading
+							});
+							//child.castShadow = true;
+							//child.receiveShadow = true;
+					    }
+					});
+					object.scale.set (0.05, 0.05, 0.05);
+					object.position.set (-20, -60, 10);
+					object.rotation.set (0, Math.PI, 0);
+					palmTrees.add( object );
+
+					/*var tree0 = object.clone();
+					tree0.scale.set (0.05, 0.05, 0.05);
+					tree0.position.set (-40, -60, -30);
+					tree0.rotation.set (0, -Math.PI / 2, 0);
+					palmTrees.add( tree0 );*/
+
+					var tree1 = object.clone();
+					tree1.scale.set (0.045, 0.045, 0.045);
+					tree1.position.set (-40, -60, 30);
+					tree1.rotation.set (0, Math.PI / 2, 0);
+					palmTrees.add( tree1 );
+
+					var tree2 = object.clone();
+					tree2.scale.set (0.04, 0.04, 0.04);
+					tree2.position.set (0, -60, 10);
+					tree2.rotation.set (0, 0, 0);
+					palmTrees.add( tree2 );
+
+					var tree3 = object.clone();
+					tree3.scale.set (0.04, 0.04, 0.04);
+					tree3.position.set (40, -60, 20);
+					tree3.rotation.set (0, Math.PI / 3, 0);
+					palmTrees.add( tree3 );
+
+				}, onProgress, onError );
+				palmTrees.visible = false;
+				sunnyvaleGroup.add (palmTrees);
+
+
+				// Create christmas lights.
+				cLights = new THREE.Group();
+				rLights = new THREE.Group();
+				gLights = new THREE.Group();
+
+				var cLightGeo = new THREE.SphereGeometry (1, 8, 8);
+				var cLightMatRed = new THREE.MeshBasicMaterial ( { color: 0xff0000 } );
+				var cLightMeshRed = new THREE.Mesh (cLightGeo, cLightMatRed);
+				cLightMeshRed.position.set ( 40, -37, 61 );
+				rLights.add (cLightMeshRed);
+
+				for ( var i = 0; i < 8; i++){
+					var cLight = cLightMeshRed.clone();
+					cLight.position.set (-40 + (10 * i), -37, 61);
+					rLights.add (cLight);
+				}
+
+				var cLightR0 = cLightMeshRed.clone ();
+				cLightR0.position.set ( -15, -45, 28.5 );
+				rLights.add (cLightR0);
+
+				var cLightR1 = cLightMeshRed.clone ();
+				cLightR1.position.set ( -37, -35, 17 );
+				rLights.add (cLightR1);
+
+				var cLightR2 = cLightMeshRed.clone ();
+				cLightR2.position.set ( -31, -43, 35 );
+				rLights.add (cLightR2);
+
+				var cLightMatGreen = new THREE.MeshBasicMaterial ( { color: 0x00ff00 } );
+				var cLightMeshGreen = new THREE.Mesh (cLightGeo, cLightMatGreen);
+				cLightMeshGreen.position.set ( 35, -37, 61 );
+				gLights.add (cLightMeshGreen);
+
+				for ( var i = 0; i < 7; i++){
+					var cLight = cLightMeshGreen.clone();
+					cLight.position.set (-35 + (10 * i), -37, 61);
+					gLights.add (cLight);
+				}
+
+				var cLightG0 = cLightMeshGreen.clone ();
+				cLightG0.position.set ( 33, -40, 17 );
+				gLights.add (cLightG0);
+
+				var cLightG1 = cLightMeshGreen.clone ();
+				cLightG1.position.set ( -33, -35, 34 );
+				gLights.add (cLightG1);
+
+				var cLightG2 = cLightMeshGreen.clone ();
+				cLightG2.position.set ( -43, -40, 24 );
+				gLights.add (cLightG2);
+
+				cLights.add (rLights);
+				cLights.add (gLights);
+				cLights.visible = false;
+				newjerseyGroup.add (cLights);
 
 
 				// Holiday point lights and meshes.
@@ -948,6 +955,7 @@
 					}
 				}
 
+				// Set new target rotation.
 				targetRotationY = startRotationY + ( mouse.x - mouseDownStart ) * 5;
 			}
 
@@ -983,6 +991,7 @@
 					mouse.x = event.touches[ 0 ].pageX - windowHalfX;
 					mouse.y = event.touches[ 0 ].pageY - windowHalfY;
 
+					// Set new target rotation.
 					targetRotationY = startRotationY + ( mouse.x - mouseDownStart ) * 0.05;
 				}
 			}
@@ -1060,6 +1069,8 @@
 			function render() {
 				particleGroup.tick( );
 
+				var dt = clock.getDelta();
+
 				var timer = -0.0002 * Date.now();
 
 				// Clamp the rotation of the globe.
@@ -1068,17 +1079,33 @@
 				}
 				else {
 					// Rotate automatically.
-					globeGroup.rotation.y -= 0.002;
+					if (startRotation)
+						globeGroup.rotation.y -= dt * 0.25;
 				}
 
-				if (globeGroup.rotation.y >= 0)
+				// Reset rotation if rotation is past Math.PI or -Math.PI * 15.
+				if (globeGroup.rotation.y > Math.PI) {
+					globeGroup.rotation.y = -Math.PI * 15 + 0.001;
+					mouseDownStart = mouse.x;
+					startRotationY = globeGroup.rotation.y;
+				}
+
+				if (globeGroup.rotation.y < -Math.PI * 15) {
+					globeGroup.rotation.y = Math.PI - 0.001;
+					mouseDownStart = mouse.x;
+					startRotationY = globeGroup.rotation.y;
+				}
+
+				/*if (globeGroup.rotation.y >= 0)
 					globeGroup.rotation.y = -0.001;
 
 				if (globeGroup.rotation.y <= -Math.PI * 14)
-					globeGroup.rotation.y = -Math.PI * 14 + 0.001;
+					globeGroup.rotation.y = -Math.PI * 14 + 0.001;*/
+
 
 				// Swap the visibility of the objects depending on the rotation.
 				var floorRotation = Math.abs (Math.floor( (globeGroup.rotation.y - Math.PI) / (Math.PI * 2) )) - 1;
+
 				if (floorRotation != currentGroup) {
 					for (var i = 0; i < cityGroups.length; i++){
 						cityGroups[i].visible = false;
