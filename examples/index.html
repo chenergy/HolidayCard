@@ -87,6 +87,31 @@
 				height: 50px;
 				color: #000000;
 			}
+
+			/** ie specific styles **/
+			.video-fallback {
+				display: none; /** display none as default, to be shown when is IE **/
+
+				width: 100vw;
+				height: 100vh;
+				margin: 0;
+				padding: 0;
+			}
+
+			.isIE10 #slider_container, 
+			.isIE10 #progressbar,
+			.isIE10 #audio,
+			.isIE9 #slider_container, 
+			.isIE9 #progressbar,
+			.isIE9 #audio {
+				display: none;
+			}
+
+			.isIE9 .video-fallback,
+			.isIE10 .video-fallback {
+				display: block;
+			}
+			
 		</style>
 		
 		<script>
@@ -127,6 +152,11 @@
 			   <source src="audio/juniper-holiday.mp3" />  
 			</audio>
 		</div>
+
+		<video class="video-fallback" width="100%" height="auto" autoplay loop>
+			<source src="movie.mp4" type="video/mp4">
+			Your browser does not support the video tag.
+		</video>
 
 		<script src="js/three.min.js"></script>
 
@@ -172,8 +202,8 @@
 		    if($('html').hasClass('isIE9')) {
 		    	isIE9 = true;
 		    }
-		    console.log('ie10:  ' + isIE10);
-		    console.log('ie9:  ' + isIE9);
+		    // console.log('ie10:  ' + isIE10);
+		    // console.log('ie9:  ' + isIE9);
 
 		    if(!isIE9 && !isIE10) {
 
@@ -1191,7 +1221,10 @@
 					renderer.render( particleScene, camera );
 				}
 			} else {
-				// ie video load here
+				if(isIE10) {
+					$('html').addClass('isIE10');
+				}
+
 			}
 
 		</script>
