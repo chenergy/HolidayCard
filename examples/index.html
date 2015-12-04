@@ -10,6 +10,7 @@
 
 		<script src="js/jquery/jquery.js"></script>
 		<script src="js/jquery/jquery-ui.js"></script>
+		<script src="js/jquery/jquery.ui.touch-punch.min.js"></script>
 		<link href="js/jquery/jquery-ui.css" rel="stylesheet">
 
 		<meta charset="utf-8">
@@ -69,10 +70,10 @@
 
 			div#slider {
 				position: absolute;
-				top : 50px;
+				top : 75px;
 				right: 50px;
 				width: 10px;
-				height: 200px;
+				height: 175px;
 				z-index : 100;
 			}
 
@@ -606,7 +607,7 @@
 					// AMSTERDAM //
 					///////////////
 					amsterdamGroup = new THREE.Group();
-					createImage ('textures/locations/amsterdam.jpg', amsterdamGroup);
+					createImage ('textures/locations/amsterdam.png', amsterdamGroup);
 					createSign ("textures/locations/titles/amsterdam_t.jpg", amsterdamGroup);
 					globeGroup.add (amsterdamGroup);
 
@@ -615,7 +616,7 @@
 					////////
 					ukGroup = new THREE.Group();
 					createImage ('textures/locations/uk.jpg', ukGroup);
-					createSign ("textures/locations/titles/london_t.jpg", ukGroup);
+					createSign ("textures/locations/titles/addlestone_t.jpg", ukGroup);
 					globeGroup.add (ukGroup);
 
 					///////////////
@@ -668,6 +669,12 @@
 						"newjersey",
 						new THREE.Vector3( -30, 30, 20 ), 
 						newjerseyGroup 
+					);
+
+					createRaycastObject (
+						"uk",
+						new THREE.Vector3( -10, 40, 20 ), 
+						ukGroup 
 					);
 
 
@@ -784,6 +791,48 @@
 					//pointLight = new THREE.PointLight( 0xffffff, 2 );
 					//scene.add( pointLight );
 
+					// Snowman
+					snowmanGroup = new THREE.Group();
+					var snowmanGeo = new THREE.SphereGeometry (10, 16, 16);
+					var snowmanMaterial = new THREE.MeshLambertMaterial( {color: 0xffffff} );
+
+					var snowmanBase = new THREE.Mesh( snowmanGeo, snowmanMaterial );
+					snowmanBase.position.set ( 10, -50, 30 );
+					snowmanGroup.add (snowmanBase);
+
+					var snowmanMid = new THREE.Mesh( snowmanGeo, snowmanMaterial );
+					snowmanMid.scale.set (0.7, 0.7, 0.7);
+					snowmanMid.position.set ( 10, -40, 30 );
+					snowmanGroup.add (snowmanMid);
+
+					var snowmanHead = new THREE.Mesh( snowmanGeo, snowmanMaterial );
+					snowmanHead.scale.set (0.5, 0.5, 0.5);
+					snowmanHead.position.set ( 10, -30, 30 );
+					snowmanGroup.add (snowmanHead);
+
+					var buttonGeo = new THREE.SphereGeometry (1, 8, 8);
+					var buttonMaterial = new THREE.MeshLambertMaterial( {color: 0x000000} );
+
+					var eye_l = new THREE.Mesh( buttonGeo, buttonMaterial );
+					eye_l.position.set ( 8, -30, 34 );
+					snowmanGroup.add (eye_l);
+
+					var eye_r = new THREE.Mesh( buttonGeo, buttonMaterial );
+					eye_r.position.set ( 12, -30, 34 );
+					snowmanGroup.add (eye_r);
+
+					var hatGeo = new THREE.CylinderGeometry( 5, 5, 5, 5, 1, true );
+					var hatMaterial = new THREE.MeshLambertMaterial( {
+						color: 0x009999,
+						side: THREE.DoubleSide
+					} );
+					var hatMesh = new THREE.Mesh( hatGeo, hatMaterial );
+					hatMesh.position.set ( 10, -25, 30 );
+					snowmanGroup.add( hatMesh );
+
+					ukGroup.add (snowmanGroup);
+					snowmanGroup.visible = false;
+
 
 					// Functionality of each onClick action for raycasts.
 					onClickFunctions = {
@@ -824,6 +873,15 @@
 								cLights.visible = false;
 							}
 							newjerseyToggle = !newjerseyToggle;
+						},
+
+						'uk' : function (){
+							if (!ukToggle) {
+								snowmanGroup.visible = true;
+							} else {
+								snowmanGroup.visible = false;
+							}
+							ukToggle = !ukToggle;
 						}
 					};
 
