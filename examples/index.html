@@ -70,10 +70,10 @@
 
 			div#slider {
 				position: absolute;
-				top : 75px;
+				top : 60px;
 				right: 50px;
 				width: 10px;
-				height: 175px;
+				height: 185px;
 				z-index : 100;
 			}
 
@@ -83,10 +83,18 @@
 				left: 0px;
 			}
 
+			.ui-slider-vertical .ui-slider-handle {
+				margin-bottom: -25px;
+			}
+
 			.ui-slider-vertical .ui-state-default {
 				background: white url(js/jquery/images/blackSlider.jpg) no-repeat scroll 50% 50%;
 				height: 50px;
 				color: #000000;
+			}
+
+			.ui-slider .ui-slider-handle {
+				height: 50px;
 			}
 
 			/** ie specific styles **/
@@ -233,7 +241,7 @@
 				var mouseDownStart, startRotationY, targetRotationY;
 
 				var globeGroup;
-				var sunnyvaleGroup, moscowGroup, hongkongGroup, newjerseyGroup, westfordGroup, amsterdamGroup, ukGroup, bangaloreGroup;
+				var sunnyvaleGroup, moscowGroup, hongkongGroup, newjerseyGroup, westfordGroup, amsterdamGroup, ukGroup, bangaloreGroup, herndonGroup;
 				var currentGroup = 0;
 				var cityGroups;
 				var palmTrees, cLights;
@@ -252,6 +260,7 @@
 				var amsterdamToggle = false;
 				var ukToggle = false;
 				var bangaloreToggle = false;
+				var herndonToggle = false;
 
 				var loaded = false;
 				var startRotation = false;
@@ -310,6 +319,7 @@
 					camera.position.y = 50;
 
 					cameraCube = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
+					//cameraCube.position.y = -100;
 
 					loadingScene = new THREE.Scene();
 					scene = new THREE.Scene();
@@ -348,23 +358,29 @@
 					//mesh.scale.set( 0.05, 0.05, 0.05 );
 					//pointLight.add( mesh );
 
-					// material samples
-					var r = "textures/cube/gray2/";
-
 					/*var urls = [ r + "px.jpg", r + "nx.jpg",
 								 r + "py.jpg", r + "ny.jpg",
 								 r + "pz.jpg", r + "nz.jpg" ];*/
-					 var urls = [ r + "nx.jpg", r + "nx.jpg",
+
+					// material samples
+					var r = "textures/cube/small/";
+					var urls = [ r + "nx.jpg", r + "nx.jpg",
 								 r + "ny.jpg", r + "ny.jpg",
 								 r + "nx.jpg", r + "nx.jpg" ];
-
 					var textureCube = THREE.ImageUtils.loadTextureCube( urls, THREE.CubeRefractionMapping );
+
+					var r2 = "textures/cube/gray2/";
+					var urls2 = [ r2 + "nx.jpg", r2 + "nx.jpg",
+								 r2 + "ny.jpg", r2 + "ny.jpg",
+								 r2 + "nx.jpg", r2 + "nx.jpg" ];
+					var textureCube2 = THREE.ImageUtils.loadTextureCube( urls2, THREE.CubeRefractionMapping );
+
 
 					// Skybox
 					var shader = THREE.ShaderLib[ "cube" ];
 					shader.uniforms[ "tCube" ].value = textureCube;
 
-					var material = new THREE.ShaderMaterial( {
+					var sceneCubeMaterial = new THREE.ShaderMaterial( {
 
 						fragmentShader: shader.fragmentShader,
 						vertexShader: shader.vertexShader,
@@ -373,15 +389,15 @@
 
 					} ),
 
-					mesh = new THREE.Mesh( new THREE.BoxGeometry( 100000, 100000, 100000 ), material );
-					sceneCube.add( mesh );
+					sceneCubeMesh = new THREE.Mesh( new THREE.BoxGeometry( 100000, 100000, 100000 ), sceneCubeMaterial );
+					sceneCube.add( sceneCubeMesh );
 
 					// Renderer
 					renderer = new THREE.WebGLRenderer( { antialias: true } );
 
 					// No autoClear for vignetting.
 					//if (!isMobile.any)
-						renderer.autoClear = false;
+					renderer.autoClear = false;
 
 					renderer.setPixelRatio( window.devicePixelRatio );
 					renderer.setSize( window.innerWidth, window.innerHeight );
@@ -445,7 +461,7 @@
 						// Back side reflective material.
 						var fshader = THREE.FresnelShader;
 						var funiforms = THREE.UniformsUtils.clone( fshader.uniforms );
-						funiforms[ "tCube" ].value = textureCube;
+						funiforms[ "tCube" ].value = textureCube2;
 						var fparameters = { fragmentShader: fshader.fragmentShader, vertexShader: fshader.vertexShader, uniforms: funiforms, side: THREE.BackSide };
 						var sphereMaterial0 = new THREE.ShaderMaterial( fparameters );
 
@@ -456,14 +472,14 @@
 
 						// Front side reflective material.
 						var sphereGeometry1 = new THREE.SphereBufferGeometry( 100, 64, 64 );
-						var sphereMaterial1 = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, reflectivity: 0.9, transparent: true, opacity: 0.2 } );
+						var sphereMaterial1 = new THREE.MeshBasicMaterial( { envMap: textureCube2, reflectivity: 0.9, transparent: true, opacity: 0.2 } );
 						var sphereMesh1 = new THREE.Mesh( sphereGeometry1, sphereMaterial1 );
 						globeGroup.add( sphereMesh1 );
 					}
 					
 					// Back side secondary material.
 					var sphereGeometry2 = new THREE.SphereBufferGeometry( 98, 64, 64 );
-					var sphereMaterial2 = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, refractionRatio: 0.98, side: THREE.BackSide } );
+					var sphereMaterial2 = new THREE.MeshBasicMaterial( { envMap: textureCube2, refractionRatio: 0.98, side: THREE.BackSide } );
 					var sphereMesh2 = new THREE.Mesh( sphereGeometry2, sphereMaterial2 );
 					globeGroup.add( sphereMesh2 );
 
@@ -555,6 +571,7 @@
 					scene.add( groundMesh );*/
 					tloader.load( 'textures/PlainBase_Shadow.JPG', function ( texture ) {
 						groundGeo = new THREE.PlaneGeometry( 570, 570 );
+						//groundGeo = new THREE.PlaneGeometry( 10000, 10000 );
 						var groundMat = new THREE.MeshBasicMaterial( { map: texture } );
 						var groundMesh = new THREE.Mesh( groundGeo, groundMat );
 						groundMesh.rotation.set (-Math.PI/2, 0, Math.PI);
@@ -628,8 +645,17 @@
 					globeGroup.add (bangaloreGroup);
 
 
+					/////////////
+					// HERNDON //
+					/////////////
+					herndonGroup = new THREE.Group();
+					createImage ('textures/locations/herndon.jpg', herndonGroup);
+					createSign ("textures/locations/titles/herndon_t.jpg", herndonGroup);
+					globeGroup.add (herndonGroup);
+
+
 					// Add city groups to scene.
-					cityGroups = [ sunnyvaleGroup, moscowGroup, hongkongGroup, newjerseyGroup, westfordGroup, amsterdamGroup, ukGroup, bangaloreGroup ];
+					cityGroups = [ sunnyvaleGroup, moscowGroup, hongkongGroup, newjerseyGroup, westfordGroup, amsterdamGroup, ukGroup, bangaloreGroup, herndonGroup ];
 					moscowGroup.visible = false;
 					hongkongGroup.visible = false;
 					newjerseyGroup.visible = false;
@@ -637,6 +663,7 @@
 					amsterdamGroup.visible = false;
 					ukGroup.visible = false;
 					bangaloreGroup.visible = false;
+					herndonGroup.visible = false;
 
 					globeGroup.rotation.y = -0.001;
 					scene.add (globeGroup);
@@ -681,7 +708,7 @@
 					// Load palm trees.
 					palmTrees = new THREE.Group();
 					omloader.load( 'obj/snowglobe/MY_PALM.obj', 'obj/snowglobe/MY_PALM.mtl', function ( object ) {
-						var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/palm1_uv_m2.bmp');
+						var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/palm1_uv_m2.jpg');
 						object.traverse(function(child) {
 						    if(child instanceof THREE.Mesh) {
 						      	//console.log(child.material);
@@ -944,13 +971,17 @@
 
 
 				function createRaycastObject ( name, position, group ){
-					var rayGeo = new THREE.IcosahedronGeometry( 10, 0 );
-					var rayMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
-					var rayMesh = new THREE.Mesh( rayGeo, rayMaterial );
-					rayMesh.name = name;
-					rayMesh.position.set (position.x, position.y, position.z);
-					group.add ( rayMesh );
-					raycastObjects.push ( rayMesh );
+					tloader.load( "textures/sprites/snowflake_w.png", function ( texture ) {
+						//var rayGeo = new THREE.IcosahedronGeometry( 10, 0 );
+						//var rayMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
+						var rayGeo = new THREE.PlaneGeometry (20, 20);
+						var rayMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture, alphaTest: 0.65, side: THREE.DoubleSide } );
+						var rayMesh = new THREE.Mesh( rayGeo, rayMaterial );
+						rayMesh.name = name;
+						rayMesh.position.set (position.x, position.y, position.z);
+						group.add ( rayMesh );
+						raycastObjects.push ( rayMesh );
+					});
 				}
 
 
@@ -1086,15 +1117,15 @@
 					if ( intersects.length > 0 ) {
 						if (INTERSECTED != intersects[0].object && INTERSECTED){
 							INTERSECTED.scale.set ( 1, 1, 1 );
-							INTERSECTED.material.wireframe = true;
+							//INTERSECTED.material.wireframe = true;
 						}
 						INTERSECTED = intersects [0].object;
 						intersects [0].object.scale.set ( 1.5, 1.5, 1.5 );
-						intersects [0].object.material.wireframe = false;
+						//intersects [0].object.material.wireframe = false;
 					} else {
 						if (INTERSECTED) {
 							INTERSECTED.scale.set ( 1, 1, 1 );
-							INTERSECTED.material.wireframe = true;
+							//INTERSECTED.material.wireframe = true;
 							INTERSECTED = null;
 						}
 					}
@@ -1158,15 +1189,15 @@
 						if ( intersects.length > 0 ) {
 							if (INTERSECTED != intersects[0].object && INTERSECTED){
 								INTERSECTED.scale.set ( 1, 1, 1 );
-								INTERSECTED.material.wireframe = true;
+								//INTERSECTED.material.wireframe = true;
 							}
 							INTERSECTED = intersects [0].object;
 							intersects [0].object.scale.set ( 1.5, 1.5, 1.5 );
-							intersects [0].object.material.wireframe = false;
+							//intersects [0].object.material.wireframe = false;
 						} else {
 							if (INTERSECTED) {
 								INTERSECTED.scale.set ( 1, 1, 1 );
-								INTERSECTED.material.wireframe = true;
+								//INTERSECTED.material.wireframe = true;
 								INTERSECTED = null;
 							}
 						}
@@ -1214,14 +1245,14 @@
 							globeGroup.rotation.y -= dt * 0.25;
 					}
 
-					// Reset rotation if rotation is past Math.PI or -Math.PI * 15.
+					// Reset rotation if rotation is past Math.PI or -Math.PI * 17.
 					if (globeGroup.rotation.y > Math.PI) {
-						globeGroup.rotation.y = -Math.PI * 15 + 0.001;
+						globeGroup.rotation.y = -Math.PI * 17 + 0.001;
 						mouseDownStart = mouse.x;
 						startRotationY = globeGroup.rotation.y;
 					}
 
-					if (globeGroup.rotation.y < -Math.PI * 15) {
+					if (globeGroup.rotation.y < -Math.PI * 17) {
 						globeGroup.rotation.y = Math.PI - 0.001;
 						mouseDownStart = mouse.x;
 						startRotationY = globeGroup.rotation.y;
