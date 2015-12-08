@@ -202,20 +202,24 @@
 		<script>
 			var isMobile;
 
-			var isIE10 = false,
+			var hasWebGL = false,
+				isIE10 = false,
 				isIE9 = false;
 		    /*@cc_on
 		        if (/^10/.test(@_jscript_version)) {
 		            isIE10 = true;
 		        }
 		    @*/
+		    
+		    hasWebGL = Detector.webgl;   // Firefox 1.0+
+		    
 		    if($('html').hasClass('isIE9')) {
 		    	isIE9 = true;
 		    }
 		    // console.log('ie10:  ' + isIE10);
 		    // console.log('ie9:  ' + isIE9);
 
-		    if(!isIE9 && !isIE10) {
+		    if(!isIE9 && !isIE10 && hasWebGL) {
 
 				//if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
@@ -515,7 +519,7 @@
 					}, onProgress, onError );
 
 					// Load trees model.
-					omloader.load( 'obj/snowglobe/trees.obj', 'obj/snowglobe/trees.mtl', function ( object ) {
+					omloader.load( 'obj/snowglobe/trees2.obj', 'obj/snowglobe/trees2.mtl', function ( object ) {
 						//var texture = THREE.ImageUtils.loadTexture('obj/snowglobe/baseNoLipColor.jpg');
 						object.traverse(function(child) {
 						    if(child instanceof THREE.Mesh) {
@@ -1311,7 +1315,7 @@
 					renderer.render( particleScene, camera );
 				}
 			} else {
-				if(isIE10) {
+				if(isIE10 || !hasWebGL) {
 					$('html').addClass('isIE10');
 				}
 
